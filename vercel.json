@@ -1,5 +1,1 @@
-{
-  "rewrites": [
-    { "source": "/", "destination": "/Ministry_of_the_Fence_Dashboard_v2.html" }
-  ]
-}
+{}
