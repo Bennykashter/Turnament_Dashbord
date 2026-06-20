@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ministry of the Fence - Tournament Coordination Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1250px;
+            margin: 0 auto;
+        }
+        header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-bottom: 3px solid #10b981;
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        header h1 { 
+            margin: 0; 
+            font-size: 28px; 
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #ffffff;
+        }
+        header p.subtitle { 
+            margin: 8px 0 0 0; 
+            font-style: italic; 
+            color: #10b981; 
+            font-size: 15px; 
+            font-weight: 500;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 25px;
+        }
+        @media (max-width: 950px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+        
+        .card {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            border: 1px solid #334155;
+        }
+        h2 { 
+            margin-top: 0; 
+            color: #ffffff; 
+            border-bottom: 2px solid #334155; 
+            padding-bottom: 12px; 
+            font-size: 19px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            background-color: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            box-sizing: border-box;
+            color: #f8fafc;
+            font-size: 14px;
+        }
+        .filter-row input[type="text"], .filter-row select {
+            width: 100%;
+            padding: 8px;
+            font-size: 12px;
+            border-radius: 5px;
+            border-color: #334155;
+            background: #111827;
+            color: #f8fafc;
+        }
+        .filter-row button {
+            width: auto;
+            padding: 8px 10px;
+            font-size: 12px;
+            border-radius: 5px;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+        button {
+            background-color: #10b981;
+            color: #0f172a;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background 0.2s ease;
+        }
+        button:hover { background-color: #059669; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #334155;
+            padding: 12px;
+            text-align: left;
+        }
+        th { 
+            background-color: #0f172a; 
+            color: #94a3b8; 
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        td { color: #e2e8f0; }
+        tr:nth-child(even) { background-color: #1b2537; }
+        
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+        .badge-a { background-color: #ef4444; color: #ffffff; }
+        .badge-b { background-color: #3b82f6; color: #ffffff; }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #334155;
+            font-size: 14px;
+        }
+        .summary-item:last-child { border-bottom: none; }
+        .summary-item span { font-weight: 500; color: #cbd5e1; }
+        
+        .votes-count {
+            background-color: #10b981;
+            color: #0f172a;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Ministry of the Fence</h1>
+        <p class="subtitle">Official Team Tournament Alignment Dashboard</p>
+    </header>
+
+    <div class="grid">
+        <!-- Left Side: Tournaments and Current Votes -->
+        <div>
+            <div class="card">
+                <h2>Available International Circuits (Autumn 2026)</h2>
+                <div class="form-group">
+                    <label for="csv-file">Load Tournament CSV</label>
+                    <input type="file" id="csv-file" accept=".csv" onchange="loadCsvFromFile()">
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tournament</th>
+                                <th>Location & Window</th>
+                                <th>Disciplines</th>
+                                <th>Tier</th>
+                                <th>Est. Flight (Gear Inc.)</th>
+                                <th>Club Commitment</th>
+                            </tr>
+                            <tr class="filter-row">
+                                <th><input type="text" id="filter-name" placeholder="Filter tournament" oninput="updateFilter()"></th>
+                                <th><input type="text" id="filter-location" placeholder="Filter location / dates" oninput="updateFilter()"></th>
+                                <th><input type="text" id="filter-disciplines" placeholder="Filter disciplines" oninput="updateFilter()"></th>
+                                <th><select id="filter-tier" onchange="updateFilter()">
+                                        <option value="">All tiers</option>
+                                        <option value="Tier A">Tier A</option>
+                                        <option value="Tier B">Tier B</option>
+                                    </select>
+                                </th>
+                                <th style="display:flex; gap:8px; align-items:center;">
+                                    <input type="text" id="filter-min-flight" placeholder="Min flight" oninput="updateFilter()">
+                                    <input type="text" id="filter-max-flight" placeholder="Max flight" oninput="updateFilter()">
+                                </th>
+                                <th style="display:flex; gap:8px; align-items:center; justify-content:flex-end;">
+                                    <input type="text" id="filter-attending" placeholder="Min attending" oninput="updateFilter()" style="width:110px;">
+                                    <button type="button" onclick="resetFilters()" style="background:#334155; width:auto; padding:8px 10px;">Reset</button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tournament-rows">
+                            <!-- Injected dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Fighter Roster Responses</h2>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fighter</th>
+                                <th>Target Tournament</th>
+                                <th>Status</th>
+                                <th>Weapon Focus / Combat Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="log-rows">
+                            <tr><td colspan="4" style="text-align:center; color:#64748b; padding: 20px;">No responses logged yet. Ready for team input.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Vote Input & Analytics Summary -->
+        <div>
+            <div class="card">
+                <h2>Log Fighter Status</h2>
+                <div class="form-group">
+                    <label for="fighter-name">Fighter Name:</label>
+                    <input type="text" id="fighter-name" placeholder="e.g., Benjamin">
+                </div>
+                <div class="form-group">
+                    <label for="tournament-select">Select Tournament:</label>
+                    <select id="tournament-select"></select>
+                </div>
+                <div class="form-group">
+                    <label for="attendance-select">Can Attend?</label>
+                    <select id="attendance-select">
+                        <option value="Yes">Yes, full contact ready</option>
+                        <option value="Maybe">Maybe / Checking budget</option>
+                        <option value="No">Unavailable</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fighter-notes">Combat Notes / Weapon Class:</label>
+                    <input type="text" id="fighter-notes" placeholder="e.g., Longsword, Saber, or Rapier focus">
+                </div>
+                <button onclick="submitVote()">Submit Entry</button>
+            </div>
+
+            <div class="card">
+                <h2>Club Consensus Rankings</h2>
+                <div id="summary-ranking">
+                    <!-- Injected dynamically by JS -->
+                </div>
+                <div style="margin-top: 18px;">
+                    <button onclick="exportToExcel()">Export All Data to Excel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const defaultTournaments = [
+        { id: 1, name: "BOHEMA Tournament", location: "Prague, Czech Republic", dates: "Mid-to-late Sept 2026", disciplines: "Mixed Steel Longsword, Women's Longsword", level: "Tier B", flight: 440, votes: 0 },
+        { id: 2, name: "Tyrnhaw 2026", location: "Trnava, Slovakia", dates: "Oct 17-18, 2026", disciplines: "Men's & Women's Longsword, Men's & Women's Sabre", level: "Tier A", flight: 420, votes: 0 },
+        { id: 3, name: "Dutch Lions Cup 2026", location: "Utrecht, Netherlands", dates: "Oct 31 - Nov 1, 2026", disciplines: "Mixed Steel Longsword, Women's Longsword", level: "Tier A", flight: 540, votes: 0 },
+        { id: 4, name: "Battle of the Bridges 2026", location: "Seraing, Belgium", dates: "Mid-Sept 2026", disciplines: "Mixed Steel Longsword, Saber, Rapier", level: "Tier B", flight: 460, votes: 0 },
+        { id: 5, name: "Hanseschlag Hamburg", location: "Hamburg, Germany", dates: "Sept 5-6, 2026", disciplines: "Mixed Longsword", level: "Tier B", flight: 520, votes: 0 },
+        { id: 6, name: "Swiss Blades", location: "Le Landeron, Switzerland", dates: "Sept 11-13, 2026", disciplines: "Longsword, Rapier, Sword & Buckler", level: "Tier A", flight: 580, votes: 0 }
+    ];
+
+    let tournaments = [...defaultTournaments];
+    const responses = [];
+    const filters = {
+        name: '',
+        location: '',
+        disciplines: '',
+        level: '',
+        minFlight: null,
+        maxFlight: null,
+        minAttending: null
+    };
+
+    function init() {
+        renderTournaments();
+        populateDropdown();
+        renderSummary();
+        tryLoadDefaultCsv();
+    }
+
+    function parseCsv(text) {
+        const rows = [];
+        let row = [];
+        let field = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const next = text[i + 1];
+
+            if (char === '"') {
+                if (inQuotes && next === '"') {
+                    field += '"';
+                    i += 1;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                row.push(field);
+                field = '';
+            } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                if (char === '\r' && next === '\n') {
+                    i += 1;
+                }
+                row.push(field);
+                rows.push(row);
+                row = [];
+                field = '';
+            } else {
+                field += char;
+            }
+        }
+
+        if (field !== '' || row.length > 0) {
+            row.push(field);
+            rows.push(row);
+        }
+
+        return rows;
+    }
+
+    function tryLoadDefaultCsv() {
+        const defaultCsvPath = 'HEMA_Europe_Planner.csv';
+        fetch(defaultCsvPath)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('CSV file not available');
+                }
+                return response.text();
+            })
+            .then(text => loadCsvText(text))
+            .catch(() => {
+                // Fallback to manual CSV upload if the file cannot be loaded from the same folder.
+            });
+    }
+
+    function loadCsvFromFile() {
+        const input = document.getElementById('csv-file');
+        if (!input.files || input.files.length === 0) {
+            alert('Please choose a CSV file first.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function() {
+            loadCsvText(reader.result);
+        };
+        reader.readAsText(input.files[0], 'UTF-8');
+    }
+
+    function loadCsvText(csvText) {
+        const data = parseCsv(csvText);
+        const headerIndex = data.findIndex(row => row[0] && row[0].trim() === 'Month');
+        if (headerIndex === -1) {
+            alert('CSV format not recognized. Make sure it includes a header row with "Month".');
+            return;
+        }
+
+        const headers = data[headerIndex].map(h => h.trim());
+        const getIndex = name => headers.findIndex(h => h.toLowerCase() === name.toLowerCase());
+        const idIndex = getIndex('Tournament Name');
+        const locationIndex = getIndex('Location');
+        const datesIndex = getIndex('Dates');
+        const disciplinesIndex = getIndex('Disciplines');
+        const levelIndex = getIndex('Level / Tier');
+        const flightIndex = getIndex('Flight Cost (With Gear)');
+
+        if (
+            idIndex === -1 ||
+            locationIndex === -1 ||
+            datesIndex === -1 ||
+            disciplinesIndex === -1 ||
+            levelIndex === -1 ||
+            flightIndex === -1
+        ) {
+            alert('CSV is missing one or more required columns.');
+            return;
+        }
+
+        const loaded = [];
+        for (let r = headerIndex + 1; r < data.length; r++) {
+            const row = data[r];
+            if (!row || row.length === 0 || !row[idIndex]) {
+                continue;
+            }
+
+            loaded.push({
+                id: loaded.length + 1,
+                name: (row[idIndex] || '').trim(),
+                location: (row[locationIndex] || '').trim(),
+                dates: (row[datesIndex] || '').trim(),
+                disciplines: (row[disciplinesIndex] || '').trim(),
+                level: (row[levelIndex] || '').trim(),
+                flight: parseInt((row[flightIndex] || '').replace(/[^0-9]/g, ''), 10) || 0,
+                votes: 0
+            });
+        }
+
+        if (loaded.length === 0) {
+            alert('No tournament rows were found in the CSV.');
+            return;
+        }
+
+        tournaments = loaded;
+        renderTournaments();
+        populateDropdown();
+        renderSummary();
+    }
+
+    function getFilteredTournaments() {
+        return tournaments.filter(t => {
+            const matchesName = !filters.name || t.name.toLowerCase().includes(filters.name.toLowerCase());
+            const matchesLocation = !filters.location || (
+                t.location.toLowerCase().includes(filters.location.toLowerCase()) ||
+                t.dates.toLowerCase().includes(filters.location.toLowerCase())
+            );
+            const matchesDisciplines = !filters.disciplines || t.disciplines.toLowerCase().includes(filters.disciplines.toLowerCase());
+            const matchesLevel = !filters.level || t.level === filters.level;
+            const matchesMinFlight = filters.minFlight === null || t.flight >= filters.minFlight;
+            const matchesMaxFlight = filters.maxFlight === null || t.flight <= filters.maxFlight;
+            const matchesAttending = filters.minAttending === null || t.votes >= filters.minAttending;
+            return matchesName && matchesLocation && matchesDisciplines && matchesLevel && matchesMinFlight && matchesMaxFlight && matchesAttending;
+        });
+    }
+
+    function renderTournaments() {
+        const tbody = document.getElementById('tournament-rows');
+        const filtered = getFilteredTournaments();
+        tbody.innerHTML = '';
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b; padding:20px;">No tournaments match the current filters.</td></tr>';
+            return;
+        }
+
+        filtered.forEach(t => {
+            const badgeClass = t.level === 'Tier A' ? 'badge-a' : 'badge-b';
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${t.name}</strong></td>
+                    <td>${t.location}<br><small style="color:#94a3b8">${t.dates}</small></td>
+                    <td>${t.disciplines || '-'}</td>
+                    <td><span class="badge ${badgeClass}">${t.level}</span></td>
+                    <td>$${t.flight}</td>
+                    <td><span class="votes-count">${t.votes} Attending</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    function populateDropdown() {
+        const select = document.getElementById('tournament-select');
+        select.innerHTML = '';
+        tournaments.forEach(t => {
+            select.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+        });
+    }
+
+    function renderSummary() {
+        const container = document.getElementById('summary-ranking');
+        container.innerHTML = '';
+        
+        const sorted = [...getFilteredTournaments()].sort((a,b) => b.votes - a.votes);
+        
+        if (sorted.length === 0) {
+            container.innerHTML = '<div class="summary-item"><span>No tournaments match filter criteria.</span></div>';
+            return;
+        }
+
+        sorted.forEach(t => {
+            container.innerHTML += `
+                <div class="summary-item">
+                    <span>${t.name}</span>
+                    <strong style="color: #10b981;">${t.votes} Confirmed</strong>
+                </div>
+            `;
+        });
+    }
+
+    function updateFilter() {
+        filters.name = document.getElementById('filter-name').value.trim();
+        filters.location = document.getElementById('filter-location').value.trim();
+        filters.disciplines = document.getElementById('filter-disciplines').value.trim();
+        filters.level = document.getElementById('filter-tier').value;
+        const minFlightValue = parseInt(document.getElementById('filter-min-flight').value, 10);
+        const maxFlightValue = parseInt(document.getElementById('filter-max-flight').value, 10);
+        const minAttendingValue = parseInt(document.getElementById('filter-attending').value, 10);
+        filters.minFlight = Number.isFinite(minFlightValue) ? minFlightValue : null;
+        filters.maxFlight = Number.isFinite(maxFlightValue) ? maxFlightValue : null;
+        filters.minAttending = Number.isFinite(minAttendingValue) ? minAttendingValue : null;
+
+        renderTournaments();
+        renderSummary();
+    }
+
+    function resetFilters() {
+        document.getElementById('filter-name').value = '';
+        document.getElementById('filter-location').value = '';
+        document.getElementById('filter-tier').value = '';
+        document.getElementById('filter-min-flight').value = '';
+        document.getElementById('filter-max-flight').value = '';
+        updateFilter();
+    }
+
+    function submitVote() {
+        const name = document.getElementById('fighter-name').value.trim();
+        const tId = parseInt(document.getElementById('tournament-select').value);
+        const attend = document.getElementById('attendance-select').value;
+        const notes = document.getElementById('fighter-notes').value.trim();
+
+        if (!name) {
+            alert('Please input a fighter name.');
+            return;
+        }
+
+        const tObj = tournaments.find(t => t.id === tId);
+        responses.push({ name, tournament: tObj.name, attend, notes });
+
+        if (attend === 'Yes' || attend === 'Maybe') {
+            tObj.votes += 1;
+        }
+
+        renderTournaments();
+        renderSummary();
+        renderLog();
+
+        document.getElementById('fighter-notes').value = '';
+    }
+
+    function renderLog() {
+        const tbody = document.getElementById('log-rows');
+        tbody.innerHTML = '';
+        if (responses.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">No responses logged yet.</td></tr>';
+            return;
+        }
+        responses.forEach(r => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${r.name}</strong></td>
+                    <td>${r.tournament}</td>
+                    <td>${r.attend}</td>
+                    <td><small style="color:#cbd5e1">${r.notes || '-'}</small></td>
+                </tr>
+            `;
+        });
+    }
+
+    function exportToExcel() {
+        const today = new Date().toISOString().split('T')[0];
+        const filename = `tournament-data-${today}.xls`;
+
+        const tournamentRows = tournaments.map(t => `
+            <tr>
+                <td>${t.name}</td>
+                <td>${t.location}</td>
+                <td>${t.dates}</td>
+                <td>${t.level}</td>
+                <td>${t.flight}</td>
+                <td>${t.votes}</td>
+            </tr>`).join('');
+
+        const responseRows = responses.length ? responses.map(r => `
+            <tr>
+                <td>${r.name}</td>
+                <td>${r.tournament}</td>
+                <td>${r.attend}</td>
+                <td>${r.notes || '-'}</td>
+            </tr>`).join('') : '<tr><td colspan="4">No responses logged yet.</td></tr>';
+
+        const html = `
+            <html xmlns:x="urn:schemas-microsoft-com:office:excel">
+            <head>
+                <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Data</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+                <meta charset="UTF-8" />
+            </head>
+            <body>
+                <h2>International Circuits</h2>
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Tournament</th>
+                            <th>Location</th>
+                            <th>Dates</th>
+                            <th>Tier</th>
+                            <th>Flight Cost</th>
+                            <th>Confirmed Responses</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tournamentRows}</tbody>
+                </table>
+                <br />
+                <h2>Fighter Responses</h2>
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Fighter</th>
+                            <th>Target Tournament</th>
+                            <th>Attendance</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>${responseRows}</tbody>
+                </table>
+            </body>
+            </html>`;
+
+        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
