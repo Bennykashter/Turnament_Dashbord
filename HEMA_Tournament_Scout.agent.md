@@ -29,7 +29,14 @@ For every request, apply these strict rules to build the dataset:
    - Travel dates scheduled CLOSE TO THE WEEKEND.
    - Essential baggage upgrade included (standard checked suitcase for gear).
    - Do not use bare-minimum low-cost carrier base fares.
-4. SOURCING: Combine upcoming official fixtures tracked via https://hemaratings.com/ with prominent annual circuit mainstays or club-run tournaments that repeat every year. Extend research to additional verified web sources, including official club event pages, national HEMA federation calendars, community tournament aggregators, and recent social media announcements from prominent event organizers. If specific dates are not finalized, mark them as projected.
+4. SOURCING: Combine upcoming official fixtures tracked via https://hemaratings.com/ with prominent annual circuit mainstays or club-run tournaments that repeat every year. Extend research to the following sources in order:
+   - Aggregator sites: https://hemaratings.com/events/, https://hemagon.com/, https://hemascorecard.com/, https://sigiforge.com/events/, https://hema-tournaments.com/, https://hema-eventcalendar.com/
+   - National federation calendars: svhemaf.se (Sweden), ukhema.com (UK), hemabond.nl (Netherlands), svhema.at (Austria), and equivalent federations per country
+   - Tournament-specific websites: Many top events have their own dedicated domains — ALWAYS attempt to find and check these directly. Known examples include: lakehema.com, swordfish.ghfs.se, tyrnhaw.tsc.sk, blackhornscup.com, londonhemaopen.com, albioncup.com, botb.se, swisshema.ch, bohema.info, rapiervienna.at, fightcampevents.com, steelnchill.com, ochsenstich.de, frieduellister.no. For any tournament you find on an aggregator, ALWAYS search "<tournament name> official site" or "<tournament name>.com" to find its own domain.
+   - Social media: Facebook event pages, Instagram announcements from prominent organizers
+   - YouTube: Search "HEMA tournament <country> 2026" — event recap videos often link to official sites
+   - Google search: "HEMA tournament <month> 2026 Europe" and "HEMA <country> tournament 2026" to surface events not on aggregators
+   If specific dates are not finalized, mark them as projected. Never rely solely on aggregators — the most important events often maintain independent websites that aggregators miss or index late.
 5. EXCEL GENERATION FORMAT: Assemble the final results into a clean openpyxl script that generates an Excel sheet with:
    - A bold header row with auto_filter toggles enabled.
    - Currency formatting ($#,##0) for flight and living costs.
