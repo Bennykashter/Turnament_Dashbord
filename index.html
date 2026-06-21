@@ -539,7 +539,7 @@
                 <button type="button" onclick="signOut()" style="width:auto;padding:6px 14px;background:#334155;color:#e2e8f0;font-size:12px;margin-left:12px;">Sign Out</button>
             `;
             adminPanel.style.display = isAdmin() ? 'block' : 'none';
-            actionTh.style.display = isAdmin() ? '' : 'none';
+            actionTh.style.display = '';
         } else {
             bar.innerHTML = `
                 <span style="color:#94a3b8;">Click a tournament name after signing in to log your attendance</span>
@@ -1070,15 +1070,20 @@
         const tbody = document.getElementById('log-rows');
         tbody.innerHTML = '';
         const admin = isAdmin();
-        const cols = admin ? 5 : 4;
+        const cols = currentUser ? 5 : 4;
         if (responses.length === 0) {
             tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center; color:#64748b;">No responses logged yet.</td></tr>`;
             return;
         }
         responses.forEach(r => {
-            const actionTd = admin
-                ? `<td><button type="button" onclick="deleteResponse('${r.id}')" class="btn-danger" style="width:auto;padding:3px 10px;font-size:12px;" title="Delete this response">×</button></td>`
-                : '';
+            let actionTd = '';
+            if (admin) {
+                actionTd = `<td><button type="button" onclick="deleteResponse('${r.id}')" class="btn-danger" style="width:auto;padding:3px 10px;font-size:12px;" title="Delete this response">×</button></td>`;
+            } else if (currentUser && r.user_id === currentUser.id) {
+                actionTd = `<td><button type="button" onclick="deleteOwnResponse('${r.id}')" style="width:auto;padding:3px 10px;font-size:12px;background:#334155;color:#e2e8f0;border:none;border-radius:6px;cursor:pointer;font-weight:700;" title="Remove your response">×</button></td>`;
+            } else if (currentUser) {
+                actionTd = '<td></td>';
+            }
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${escHtml(r.name)}</strong></td>
@@ -1162,6 +1167,13 @@
     }
 
     // ── Admin functions ─────────────────────────────────────────────────────
+    async function deleteOwnResponse(id) {
+        if (!confirm('Remove your response?')) return;
+        const { error } = await sb.rpc('delete_own_response', { response_id: id });
+        if (error) { alert('Failed to remove: ' + error.message); return; }
+        await loadResponses();
+    }
+
     async function deleteResponse(id) {
         if (!confirm('Delete this response?')) return;
         const { error } = await sb.rpc('admin_delete_response', { response_id: id });
