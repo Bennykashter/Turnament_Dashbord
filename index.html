@@ -233,10 +233,6 @@
         <div>
             <div class="card">
                 <h2>Available International Circuits (Autumn 2026)</h2>
-                <div class="form-group">
-                    <label for="csv-file">Load Tournament CSV</label>
-                    <input type="file" id="csv-file" accept=".csv" onchange="loadCsvFromFile()">
-                </div>
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -339,6 +335,12 @@
 
                 <p class="admin-section-title">Danger Zone</p>
                 <button type="button" class="btn-danger" onclick="clearAllResponses()">Clear All Responses</button>
+
+                <p class="admin-section-title">Load Tournament CSV</p>
+                <div class="form-group">
+                    <label for="csv-file">Upload CSV file</label>
+                    <input type="file" id="csv-file" accept=".csv" onchange="loadCsvFromFile()">
+                </div>
 
                 <p class="admin-section-title">Add Tournament</p>
                 <div class="form-group">
