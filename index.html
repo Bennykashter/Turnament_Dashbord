@@ -195,6 +195,27 @@
             font-weight: 700;
             font-size: 12px;
         }
+        #admin-panel {
+            border-color: #ef4444;
+        }
+        #admin-panel h2 {
+            color: #ef4444;
+            border-bottom-color: #ef4444;
+        }
+        .btn-danger {
+            background-color: #ef4444;
+            color: #fff;
+        }
+        .btn-danger:hover { background-color: #dc2626; }
+        .admin-section-title {
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 18px 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #334155;
+        }
     </style>
 </head>
 <body>
@@ -265,6 +286,7 @@
                                 <th>Target Tournament</th>
                                 <th>Status</th>
                                 <th>Weapon Focus / Combat Notes</th>
+                                <th id="log-action-th" style="display:none;"></th>
                             </tr>
                         </thead>
                         <tbody id="log-rows">
@@ -311,6 +333,47 @@
                     <button onclick="exportToExcel()">Export All Data to Excel</button>
                 </div>
             </div>
+
+            <div id="admin-panel" class="card" style="display:none;">
+                <h2>Admin Panel</h2>
+
+                <p class="admin-section-title">Danger Zone</p>
+                <button type="button" class="btn-danger" onclick="clearAllResponses()">Clear All Responses</button>
+
+                <p class="admin-section-title">Add Tournament</p>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="admin-t-name" placeholder="e.g., Euro Open 2026">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="admin-t-location" placeholder="City, Country">
+                </div>
+                <div class="form-group">
+                    <label>Dates</label>
+                    <input type="text" id="admin-t-dates" placeholder="e.g., Nov 14-15, 2026">
+                </div>
+                <div class="form-group">
+                    <label>Disciplines</label>
+                    <input type="text" id="admin-t-disciplines" placeholder="e.g., Longsword, Sabre">
+                </div>
+                <div class="form-group">
+                    <label>Tier</label>
+                    <select id="admin-t-tier">
+                        <option value="Tier A">Tier A</option>
+                        <option value="Tier B">Tier B</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Max Flight Cost ($)</label>
+                    <input type="text" id="admin-t-flight" placeholder="e.g., 500">
+                </div>
+                <div class="form-group">
+                    <label>Registration Link</label>
+                    <input type="text" id="admin-t-reglink" placeholder="https://...">
+                </div>
+                <button type="button" onclick="addTournamentAdmin()">Add Tournament</button>
+            </div>
         </div>
     </div>
 </div>
@@ -329,6 +392,8 @@
     });
 
     let currentUser = null;
+    const ADMIN_EMAIL = 'bennykashter@gmail.com';
+    function isAdmin() { return currentUser?.email === ADMIN_EMAIL; }
 
     // ── Auth ────────────────────────────────────────────────────────────────
     async function initAuth() {
@@ -346,6 +411,9 @@
         const nameInput = document.getElementById('fighter-name');
         const submitBtn = document.getElementById('submit-btn');
 
+        const adminPanel = document.getElementById('admin-panel');
+        const actionTh = document.getElementById('log-action-th');
+
         if (currentUser) {
             const displayName = currentUser.user_metadata?.full_name || currentUser.email;
             bar.innerHTML = `
@@ -357,6 +425,8 @@
             nameInput.style.opacity = '0.7';
             submitBtn.disabled = false;
             submitBtn.title = '';
+            adminPanel.style.display = isAdmin() ? 'block' : 'none';
+            actionTh.style.display = isAdmin() ? '' : 'none';
         } else {
             bar.innerHTML = `
                 <span style="color:#94a3b8;">Sign in to submit your attendance choices</span>
@@ -367,7 +437,10 @@
             nameInput.style.opacity = '1';
             submitBtn.disabled = true;
             submitBtn.title = 'Sign in with Google to submit your attendance';
+            adminPanel.style.display = 'none';
+            actionTh.style.display = 'none';
         }
+        renderLog();
     }
 
     async function signInWithGoogle() {
@@ -396,6 +469,7 @@
         responses.length = 0;
         data.forEach(row => {
             responses.push({
+                id: row.id,
                 name: row.fighter_name,
                 tournament: row.tournament_name,
                 attend: row.attendance_status,
@@ -738,17 +812,23 @@
     function renderLog() {
         const tbody = document.getElementById('log-rows');
         tbody.innerHTML = '';
+        const admin = isAdmin();
+        const cols = admin ? 5 : 4;
         if (responses.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">No responses logged yet.</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center; color:#64748b;">No responses logged yet.</td></tr>`;
             return;
         }
         responses.forEach(r => {
+            const actionTd = admin
+                ? `<td><button type="button" onclick="deleteResponse('${r.id}')" class="btn-danger" style="width:auto;padding:3px 10px;font-size:12px;" title="Delete this response">×</button></td>`
+                : '';
             tbody.innerHTML += `
                 <tr>
-                    <td><strong>${r.name}</strong></td>
-                    <td>${r.tournament}</td>
-                    <td>${r.attend}</td>
-                    <td><small style="color:#cbd5e1">${r.notes || '-'}</small></td>
+                    <td><strong>${escHtml(r.name)}</strong></td>
+                    <td>${escHtml(r.tournament)}</td>
+                    <td>${escHtml(r.attend)}</td>
+                    <td><small style="color:#cbd5e1">${escHtml(r.notes || '-')}</small></td>
+                    ${actionTd}
                 </tr>
             `;
         });
@@ -822,6 +902,43 @@
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+    }
+
+    // ── Admin functions ─────────────────────────────────────────────────────
+    async function deleteResponse(id) {
+        if (!confirm('Delete this response?')) return;
+        const { error } = await sb.from('fighter_responses').delete().eq('id', id);
+        if (error) { alert('Delete failed: ' + error.message); return; }
+        await loadResponses();
+    }
+
+    async function clearAllResponses() {
+        if (!confirm('Clear ALL responses? This cannot be undone.')) return;
+        const { error } = await sb.from('fighter_responses').delete().gte('created_at', '2000-01-01');
+        if (error) { alert('Clear failed: ' + error.message); return; }
+        await loadResponses();
+    }
+
+    function addTournamentAdmin() {
+        const name = document.getElementById('admin-t-name').value.trim();
+        const location = document.getElementById('admin-t-location').value.trim();
+        const dates = document.getElementById('admin-t-dates').value.trim();
+        const disciplines = document.getElementById('admin-t-disciplines').value.trim();
+        const level = document.getElementById('admin-t-tier').value;
+        const flight = parseInt(document.getElementById('admin-t-flight').value, 10) || 0;
+        const regLink = document.getElementById('admin-t-reglink').value.trim();
+
+        if (!name) { alert('Tournament name is required.'); return; }
+
+        const newId = Math.max(...tournaments.map(t => t.id), 0) + 1;
+        tournaments.push({ id: newId, name, location, dates, disciplines, level, flight, votes: 0, regLink });
+
+        renderTournaments();
+        populateDropdown();
+        renderSummary();
+
+        ['admin-t-name','admin-t-location','admin-t-dates','admin-t-disciplines','admin-t-flight','admin-t-reglink']
+            .forEach(id => { document.getElementById(id).value = ''; });
     }
 
     window.onload = init;
