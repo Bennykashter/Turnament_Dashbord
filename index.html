@@ -394,6 +394,20 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- Right Side: Analytics Summary -->
+        <div>
+            <div class="card">
+                <h2>Club Consensus Rankings</h2>
+                <div id="summary-ranking">
+                    <!-- Injected dynamically by JS -->
+                </div>
+                <div style="margin-top: 18px;">
+                    <button onclick="exportToExcel()">Export All Data to Excel</button>
+                </div>
+            </div>
+
             <div class="card">
                 <h2>Fighter Roster Responses</h2>
                 <div style="overflow-x: auto;">
@@ -411,19 +425,6 @@
                             <tr><td colspan="4" style="text-align:center; color:#64748b; padding: 20px;">No responses logged yet. Ready for team input.</td></tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Side: Analytics Summary -->
-        <div>
-            <div class="card">
-                <h2>Club Consensus Rankings</h2>
-                <div id="summary-ranking">
-                    <!-- Injected dynamically by JS -->
-                </div>
-                <div style="margin-top: 18px;">
-                    <button onclick="exportToExcel()">Export All Data to Excel</button>
                 </div>
             </div>
 
@@ -1164,14 +1165,28 @@
     async function deleteResponse(id) {
         if (!confirm('Delete this response?')) return;
         const { error } = await sb.from('fighter_responses').delete().eq('id', id);
-        if (error) { alert('Delete failed: ' + error.message); return; }
+        if (error) {
+            if (error.code === '42501' || error.message.includes('policy')) {
+                alert('Permission denied.\n\nRun this SQL in Supabase → SQL Editor:\n\ncreate policy "admin can delete any"\n  on fighter_responses for delete\n  using (auth.email() = \'bennykashter@gmail.com\');');
+            } else {
+                alert('Delete failed: ' + error.message);
+            }
+            return;
+        }
         await loadResponses();
     }
 
     async function clearAllResponses() {
         if (!confirm('Clear ALL responses? This cannot be undone.')) return;
-        const { error } = await sb.from('fighter_responses').delete().gte('created_at', '2000-01-01');
-        if (error) { alert('Clear failed: ' + error.message); return; }
+        const { error } = await sb.from('fighter_responses').delete().not('id', 'is', null);
+        if (error) {
+            if (error.code === '42501' || error.message.includes('policy')) {
+                alert('Permission denied.\n\nRun this SQL in Supabase → SQL Editor:\n\ncreate policy "admin can delete any"\n  on fighter_responses for delete\n  using (auth.email() = \'bennykashter@gmail.com\');');
+            } else {
+                alert('Clear failed: ' + error.message);
+            }
+            return;
+        }
         await loadResponses();
     }
 
