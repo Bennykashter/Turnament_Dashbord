@@ -33,10 +33,26 @@ create policy "authenticated can update own"
   on fighter_responses for update
   using (auth.uid() = user_id);
 
--- Admin (bennykashter@gmail.com) can delete any response
-create policy "admin can delete any"
-  on fighter_responses for delete
-  using (auth.email() = 'bennykashter@gmail.com');
+-- Admin delete functions (bypass RLS via security definer)
+create or replace function admin_delete_response(response_id uuid)
+returns void language plpgsql security definer as $$
+begin
+  if auth.email() != 'bennykashter@gmail.com' then
+    raise exception 'Not authorized';
+  end if;
+  delete from fighter_responses where id = response_id;
+end;
+$$;
+
+create or replace function admin_clear_responses()
+returns void language plpgsql security definer as $$
+begin
+  if auth.email() != 'bennykashter@gmail.com' then
+    raise exception 'Not authorized';
+  end if;
+  delete from fighter_responses;
+end;
+$$;
 
 -- 4. Auto-update the updated_at timestamp on row changes
 create or replace function update_updated_at()

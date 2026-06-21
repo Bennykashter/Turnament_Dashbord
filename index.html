@@ -1164,29 +1164,15 @@
     // ── Admin functions ─────────────────────────────────────────────────────
     async function deleteResponse(id) {
         if (!confirm('Delete this response?')) return;
-        const { error } = await sb.from('fighter_responses').delete().eq('id', id);
-        if (error) {
-            if (error.code === '42501' || error.message.includes('policy')) {
-                alert('Permission denied.\n\nRun this SQL in Supabase → SQL Editor:\n\ncreate policy "admin can delete any"\n  on fighter_responses for delete\n  using (auth.email() = \'bennykashter@gmail.com\');');
-            } else {
-                alert('Delete failed: ' + error.message);
-            }
-            return;
-        }
+        const { error } = await sb.rpc('admin_delete_response', { response_id: id });
+        if (error) { alert('Delete failed: ' + error.message); return; }
         await loadResponses();
     }
 
     async function clearAllResponses() {
         if (!confirm('Clear ALL responses? This cannot be undone.')) return;
-        const { error } = await sb.from('fighter_responses').delete().not('id', 'is', null);
-        if (error) {
-            if (error.code === '42501' || error.message.includes('policy')) {
-                alert('Permission denied.\n\nRun this SQL in Supabase → SQL Editor:\n\ncreate policy "admin can delete any"\n  on fighter_responses for delete\n  using (auth.email() = \'bennykashter@gmail.com\');');
-            } else {
-                alert('Clear failed: ' + error.message);
-            }
-            return;
-        }
+        const { error } = await sb.rpc('admin_clear_responses');
+        if (error) { alert('Clear failed: ' + error.message); return; }
         await loadResponses();
     }
 
