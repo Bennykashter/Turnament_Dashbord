@@ -18,28 +18,45 @@
             margin: 0 auto;
         }
         header {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border-bottom: 3px solid #10b981;
+            background: linear-gradient(135deg, #1a0a0a 0%, #0f0505 100%);
+            border-bottom: 3px solid #C0272D;
             color: white;
-            padding: 30px;
+            padding: 24px 30px;
             border-radius: 8px;
             margin-bottom: 25px;
             text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        header h1 { 
-            margin: 0; 
-            font-size: 28px; 
-            letter-spacing: 1px;
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .header-logo {
+            height: 80px;
+            background: rgba(255,255,255,0.93);
+            border-radius: 8px;
+            padding: 8px 16px;
+            flex-shrink: 0;
+        }
+        .header-text { text-align: left; }
+        header h1 {
+            margin: 0;
+            font-size: 26px;
+            letter-spacing: 2px;
             text-transform: uppercase;
             color: #ffffff;
+            font-weight: 800;
         }
-        header p.subtitle { 
-            margin: 8px 0 0 0; 
-            font-style: italic; 
-            color: #10b981; 
-            font-size: 15px; 
+        header p.subtitle {
+            margin: 6px 0 0 0;
+            font-style: italic;
+            color: #C0272D;
+            font-size: 14px;
             font-weight: 500;
+            letter-spacing: 0.5px;
         }
         
         .grid {
@@ -107,11 +124,11 @@
         }
         input[type="text"]:focus, select:focus {
             outline: none;
-            border-color: #10b981;
+            border-color: #C0272D;
         }
         button {
-            background-color: #10b981;
-            color: #0f172a;
+            background-color: #C0272D;
+            color: #ffffff;
             border: none;
             padding: 12px 18px;
             border-radius: 6px;
@@ -122,7 +139,7 @@
             letter-spacing: 0.5px;
             transition: background 0.2s ease;
         }
-        button:hover { background-color: #059669; }
+        button:hover { background-color: #9B1E22; }
         button:disabled {
             background-color: #334155;
             color: #64748b;
@@ -173,9 +190,9 @@
             display: inline-block;
             text-transform: uppercase;
         }
-        .badge-a { background-color: #ef4444; color: #ffffff; }
+        .badge-a { background-color: #B8860B; color: #fff; }
         .badge-b { background-color: #3b82f6; color: #ffffff; }
-        .badge-c { background-color: #10b981; color: #0f172a; }
+        .badge-c { background-color: #475569; color: #e2e8f0; }
         
         .summary-item {
             display: flex;
@@ -189,8 +206,8 @@
         .summary-item span { font-weight: 500; color: #cbd5e1; }
         
         .votes-count {
-            background-color: #10b981;
-            color: #0f172a;
+            background-color: #C0272D;
+            color: #ffffff;
             padding: 3px 10px;
             border-radius: 6px;
             font-weight: 700;
@@ -221,7 +238,7 @@
             background: none;
             border: none;
             padding: 0;
-            color: #10b981;
+            color: #C0272D;
             font-weight: 700;
             font-size: inherit;
             cursor: pointer;
@@ -232,7 +249,7 @@
             letter-spacing: 0;
             transition: color 0.15s;
         }
-        .t-name-btn:hover { background: none; color: #34d399; }
+        .t-name-btn:hover { background: none; color: #E05555; }
         .month-filter-btn {
             width: auto;
             padding: 5px 16px;
@@ -247,9 +264,9 @@
             cursor: pointer;
             transition: all 0.15s;
         }
-        .month-filter-btn.active { background: #10b981; color: #0f172a; border-color: #10b981; }
+        .month-filter-btn.active { background: #C0272D; color: #ffffff; border-color: #C0272D; }
         .month-filter-btn:hover { background: #1e293b; color: #e2e8f0; }
-        .month-filter-btn.active:hover { background: #059669; color: #0f172a; }
+        .month-filter-btn.active:hover { background: #9B1E22; color: #ffffff; }
         .tip {
             position: relative;
             display: inline-flex;
@@ -333,7 +350,7 @@
             transition: all 0.15s;
         }
         .modal-status-btns button:hover { background: #1e293b; }
-        .modal-status-btns button.active-yes  { background: #10b981; color: #0f172a; border-color: #10b981; }
+        .modal-status-btns button.active-yes  { background: #C0272D; color: #ffffff; border-color: #C0272D; }
         .modal-status-btns button.active-maybe { background: #f59e0b; color: #0f172a; border-color: #f59e0b; }
         .modal-status-btns button.active-no   { background: #ef4444; color: #fff;    border-color: #ef4444; }
 
@@ -363,7 +380,7 @@
             transition: color 0.15s;
         }
         .tab-btn:hover { color: #e2e8f0; background: rgba(255,255,255,0.03); }
-        .tab-btn.active { color: #10b981; border-bottom-color: #10b981; }
+        .tab-btn.active { color: #C0272D; border-bottom-color: #C0272D; }
         .tab-panel { display: none; padding: 22px; }
         .tab-panel.active { display: block; }
         .tab-panel.admin-tab { border-top: 2px solid #ef4444; }
@@ -473,8 +490,13 @@
 
 <div class="container">
     <header>
-        <h1>Ministry of the Fence</h1>
-        <p class="subtitle">Official Team Tournament Alignment Dashboard</p>
+        <div class="header-inner">
+            <img class="header-logo" src="https://static.wixstatic.com/media/5e2420_3808b7f2c1b7435b8d40e080869f2e61~mv2.png" alt="Ministry of the Fence">
+            <div class="header-text">
+                <h1>Ministry of the Fence</h1>
+                <p class="subtitle">Tournament Alignment Dashboard</p>
+            </div>
+        </div>
     </header>
 
     <div id="auth-bar"></div>
@@ -483,11 +505,11 @@
         <button type="button" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'; this.textContent=this.textContent.includes('▼')?'How to use ▲':'How to use ▼';" style="background:none;border:1px solid #334155;color:#64748b;font-size:12px;padding:5px 12px;width:auto;min-height:0;text-transform:none;letter-spacing:0;border-radius:6px;">How to use ▼</button>
         <div style="display:none; margin-top:10px; padding:14px 18px; background:#1e293b; border:1px solid #334155; border-radius:8px; font-size:13px; line-height:1.9; color:#cbd5e1;">
             <strong style="color:#fff; display:block; margin-bottom:6px;">Quick guide</strong>
-            <b style="color:#10b981;">1.</b> Use the <b>month buttons</b> to filter by time of year — or use the filter row to search by name, location, or tier.<br>
-            <b style="color:#10b981;">2.</b> <b>Sign in with Google</b> (button top-right) to participate.<br>
-            <b style="color:#10b981;">3.</b> <b>Click any tournament name</b> to log your attendance: Yes / Maybe / No, and add a weapon note.<br>
-            <b style="color:#10b981;">4.</b> The <b>Rankings tab</b> shows which events the club is leaning toward, sorted by votes.<br>
-            <b style="color:#10b981;">5.</b> Your response shows under the tournament name in green / amber / red. Click again to update it.
+            <b style="color:#C0272D;">1.</b> Use the <b>month buttons</b> to filter by time of year — or use the filter row to search by name, location, or tier.<br>
+            <b style="color:#C0272D;">2.</b> <b>Sign in with Google</b> (button top-right) to participate.<br>
+            <b style="color:#C0272D;">3.</b> <b>Click any tournament name</b> to log your attendance: Yes / Maybe / No, and add a weapon note.<br>
+            <b style="color:#C0272D;">4.</b> The <b>Rankings tab</b> shows which events the club is leaning toward, sorted by votes.<br>
+            <b style="color:#C0272D;">5.</b> Your response shows under the tournament name in green / amber / red. Click again to update it.
         </div>
     </div>
 
@@ -691,7 +713,7 @@
         if (currentUser) {
             const displayName = currentUser.user_metadata?.full_name || currentUser.email;
             bar.innerHTML = `
-                <span style="color:#10b981; font-weight:600;">Signed in as ${escHtml(displayName)}</span>
+                <span style="color:#C0272D; font-weight:600;">Signed in as ${escHtml(displayName)}</span>
                 <button type="button" onclick="signOut()" style="width:auto;padding:6px 14px;background:#334155;color:#e2e8f0;font-size:12px;margin-left:12px;">Sign Out</button>
             `;
             adminTabBtn.style.display = isAdmin() ? '' : 'none';
@@ -1149,12 +1171,12 @@
         filtered.forEach(t => {
             const badgeClass = t.level === 'Tier A' ? 'badge-a' : t.level === 'Tier B' ? 'badge-b' : 'badge-c';
             const regCell = t.regLink
-                ? `<a href="${t.regLink}" target="_blank" rel="noopener" style="color:#10b981; font-weight:600; text-decoration:none;">Register →</a>`
+                ? `<a href="${t.regLink}" target="_blank" rel="noopener" style="color:#C0272D; font-weight:600; text-decoration:none;">Register →</a>`
                 : '-';
             const myResponse = currentUser
                 ? responses.find(r => r.user_id === currentUser.id && r.tournament === t.name)
                 : null;
-            const statusColors = { Yes: '#10b981', Maybe: '#f59e0b', No: '#ef4444' };
+            const statusColors = { Yes: '#C0272D', Maybe: '#f59e0b', No: '#64748b' };
             const myStatusTag = myResponse
                 ? `<br><small style="color:${statusColors[myResponse.attend] || '#94a3b8'}">You: ${myResponse.attend}</small>`
                 : '';
@@ -1206,7 +1228,7 @@
                         <div>${escHtml(t.name)}</div>
                         ${names ? `<div style="font-size:11px; color:#64748b; margin-top:2px;">${names}</div>` : ''}
                     </div>
-                    <strong style="color:#10b981; white-space:nowrap; margin-left:12px;">${t.votes} Confirmed</strong>
+                    <strong style="color:#C0272D; white-space:nowrap; margin-left:12px;">${t.votes} Confirmed</strong>
                 </div>
             `;
         });
