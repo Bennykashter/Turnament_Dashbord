@@ -1170,9 +1170,12 @@
     }
 
     async function clearAllResponses() {
-        if (!confirm('Clear ALL responses? This cannot be undone.')) return;
-        const { error } = await sb.rpc('admin_clear_responses');
-        if (error) { alert('Clear failed: ' + error.message); return; }
+        if (responses.length === 0) { alert('No responses to clear.'); return; }
+        if (!confirm(`Clear all ${responses.length} responses? This cannot be undone.`)) return;
+        for (const r of responses) {
+            const { error } = await sb.rpc('admin_delete_response', { response_id: r.id });
+            if (error) { alert('Clear failed on: ' + r.name + ' — ' + error.message); return; }
+        }
         await loadResponses();
     }
 
