@@ -175,6 +175,7 @@
         }
         .badge-a { background-color: #ef4444; color: #ffffff; }
         .badge-b { background-color: #3b82f6; color: #ffffff; }
+        .badge-c { background-color: #10b981; color: #0f172a; }
         
         .summary-item {
             display: flex;
@@ -933,7 +934,7 @@
         }
 
         filtered.forEach(t => {
-            const badgeClass = t.level === 'Tier A' ? 'badge-a' : 'badge-b';
+            const badgeClass = t.level === 'Tier A' ? 'badge-a' : t.level === 'Tier B' ? 'badge-b' : 'badge-c';
             const regCell = t.regLink
                 ? `<a href="${t.regLink}" target="_blank" rel="noopener" style="color:#10b981; font-weight:600; text-decoration:none;">Register →</a>`
                 : '-';
