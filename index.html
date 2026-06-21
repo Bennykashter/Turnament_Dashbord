@@ -232,6 +232,23 @@
             transition: color 0.15s;
         }
         .t-name-btn:hover { background: none; color: #34d399; }
+        .month-filter-btn {
+            width: auto;
+            padding: 5px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 20px;
+            background: #0f172a;
+            color: #64748b;
+            border: 1px solid #334155;
+            text-transform: none;
+            letter-spacing: 0;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .month-filter-btn.active { background: #10b981; color: #0f172a; border-color: #10b981; }
+        .month-filter-btn:hover { background: #1e293b; color: #e2e8f0; }
+        .month-filter-btn.active:hover { background: #059669; color: #0f172a; }
         .modal-overlay {
             display: none;
             position: fixed;
@@ -284,7 +301,8 @@
         <!-- Left Side: Tournaments and Current Votes -->
         <div>
             <div class="card">
-                <h2>Available International Circuits (Autumn 2026)</h2>
+                <h2>Available International Circuits</h2>
+                <div id="month-filters" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;"></div>
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -562,12 +580,12 @@
     // ────────────────────────────────────────────────────────────────────────
 
     const defaultTournaments = [
-        { id: 1, name: "BOHEMA Tournament", location: "Prague, Czech Republic", dates: "Mid-to-late Sept 2026", disciplines: "Mixed Steel Longsword, Women's Longsword", level: "Tier B", flight: 440, votes: 0, regLink: "https://hema-praha.cz/" },
-        { id: 2, name: "Tyrnhaw 2026", location: "Trnava, Slovakia", dates: "Oct 17-18, 2026", disciplines: "Men's & Women's Longsword, Men's & Women's Sabre", level: "Tier A", flight: 420, votes: 0, regLink: "https://tyrnhaw.tsc.sk/" },
-        { id: 3, name: "Dutch Lions Cup 2026", location: "Utrecht, Netherlands", dates: "Oct 31 - Nov 1, 2026", disciplines: "Mixed Steel Longsword, Women's Longsword", level: "Tier A", flight: 540, votes: 0, regLink: "https://www.hemabond.nl/home/dutch-lions-cup/" },
-        { id: 4, name: "Battle of the Bridges 2026", location: "Seraing, Belgium", dates: "Mid-Sept 2026", disciplines: "Mixed Steel Longsword, Saber, Rapier", level: "Tier B", flight: 460, votes: 0, regLink: "https://hemascorecard.com/" },
-        { id: 5, name: "Hanseschlag Hamburg", location: "Hamburg, Germany", dates: "Sept 5-6, 2026", disciplines: "Mixed Longsword", level: "Tier B", flight: 520, votes: 0, regLink: "https://hemaratings.com/events/" },
-        { id: 6, name: "Swiss Blades", location: "Le Landeron, Switzerland", dates: "Sept 11-13, 2026", disciplines: "Longsword, Rapier, Sword & Buckler", level: "Tier A", flight: 580, votes: 0, regLink: "https://swisshema.ch/en/" }
+        { id: 1, name: "BOHEMA Tournament", month: "September", location: "Prague, Czech Republic", dates: "Mid-to-late Sept 2026", disciplines: "Mixed Steel Longsword, Women's Longsword", level: "Tier B", flight: 440, votes: 0, regLink: "https://hema-praha.cz/" },
+        { id: 2, name: "Tyrnhaw 2026", month: "October", location: "Trnava, Slovakia", dates: "Oct 17-18, 2026", disciplines: "Men's & Women's Longsword, Men's & Women's Sabre", level: "Tier A", flight: 420, votes: 0, regLink: "https://tyrnhaw.tsc.sk/" },
+        { id: 3, name: "Dutch Lions Cup 2026", month: "October", location: "Utrecht, Netherlands", dates: "Oct 31 - Nov 1, 2026", disciplines: "Mixed Steel Longsword, Women's Longsword", level: "Tier A", flight: 540, votes: 0, regLink: "https://www.hemabond.nl/home/dutch-lions-cup/" },
+        { id: 4, name: "Battle of the Bridges 2026", month: "September", location: "Seraing, Belgium", dates: "Mid-Sept 2026", disciplines: "Mixed Steel Longsword, Saber, Rapier", level: "Tier B", flight: 460, votes: 0, regLink: "https://hemascorecard.com/" },
+        { id: 5, name: "Hanseschlag Hamburg", month: "September", location: "Hamburg, Germany", dates: "Sept 5-6, 2026", disciplines: "Mixed Longsword", level: "Tier B", flight: 520, votes: 0, regLink: "https://hemaratings.com/events/" },
+        { id: 6, name: "Swiss Blades", month: "September", location: "Le Landeron, Switzerland", dates: "Sept 11-13, 2026", disciplines: "Longsword, Rapier, Sword & Buckler", level: "Tier A", flight: 580, votes: 0, regLink: "https://swisshema.ch/en/" }
     ];
 
     let tournaments = [...defaultTournaments];
@@ -578,7 +596,8 @@
         disciplines: '',
         level: '',
         maxFlight: null,
-        minAttending: null
+        minAttending: null,
+        months: new Set()
     };
 
     async function init() {
@@ -667,6 +686,7 @@
 
         const headers = data[headerIndex].map(h => h.trim());
         const getIndex = name => headers.findIndex(h => h.toLowerCase() === name.toLowerCase());
+        const monthIndex = getIndex('Month');
         const idIndex = getIndex('Tournament Name');
         const locationIndex = getIndex('Location');
         const datesIndex = getIndex('Dates');
@@ -696,6 +716,7 @@
 
             loaded.push({
                 id: loaded.length + 1,
+                month: monthIndex !== -1 ? (row[monthIndex] || '').trim() : '',
                 name: (row[idIndex] || '').trim(),
                 location: (row[locationIndex] || '').trim(),
                 dates: (row[datesIndex] || '').trim(),
@@ -728,11 +749,34 @@
             const matchesLevel = !filters.level || t.level === filters.level;
             const matchesMaxFlight = filters.maxFlight === null || t.flight <= filters.maxFlight;
             const matchesAttending = filters.minAttending === null || t.votes >= filters.minAttending;
-            return matchesName && matchesLocation && matchesDisciplines && matchesLevel && matchesMaxFlight && matchesAttending;
+            const matchesMonth = filters.months.size === 0 || filters.months.has(t.month);
+            return matchesName && matchesLocation && matchesDisciplines && matchesLevel && matchesMaxFlight && matchesAttending && matchesMonth;
         });
     }
 
+    const MONTH_ORDER = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    function renderMonthButtons() {
+        const container = document.getElementById('month-filters');
+        const unique = [...new Set(tournaments.map(t => t.month).filter(Boolean))];
+        unique.sort((a, b) => MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b));
+        container.innerHTML = unique.map(m =>
+            `<button type="button" class="month-filter-btn${filters.months.has(m) ? ' active' : ''}" onclick="toggleMonthFilter('${m}')">${m}</button>`
+        ).join('');
+    }
+
+    function toggleMonthFilter(month) {
+        if (filters.months.has(month)) {
+            filters.months.delete(month);
+        } else {
+            filters.months.add(month);
+        }
+        renderTournaments();
+        renderSummary();
+    }
+
     function renderTournaments() {
+        renderMonthButtons();
         const tbody = document.getElementById('tournament-rows');
         const filtered = getFilteredTournaments();
         tbody.innerHTML = '';
@@ -812,6 +856,7 @@
         document.getElementById('filter-location').value = '';
         document.getElementById('filter-tier').value = '';
         document.getElementById('filter-max-flight').value = '';
+        filters.months.clear();
         updateFilter();
     }
 
