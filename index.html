@@ -321,7 +321,12 @@
     // Supabase → Project Settings → API
     const SUPABASE_URL = 'https://yfnzuwxjuolofhitjpzx.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_nj7dSjFL_rnq2A7VUB2iBw_Z-5mZfNQ';
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+            flowType: 'implicit',
+            detectSessionInUrl: true
+        }
+    });
 
     let currentUser = null;
 
