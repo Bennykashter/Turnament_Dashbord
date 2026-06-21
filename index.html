@@ -460,6 +460,12 @@
             button { min-height: 44px; }
             .t-name-btn, .month-filter-btn, .tip { min-height: 0; }
             .month-filter-btn { padding: 7px 14px; font-size: 13px; }
+
+            /* Mobile tab bar */
+            #mobile-tab-bar { display: flex !important; margin-bottom: 14px; background: #1e293b; border-radius: 8px; border: 1px solid #334155; overflow: hidden; }
+            #mobile-tab-bar .tab-btn { border-radius: 0; font-size: 11px; padding: 10px 6px; }
+            /* Hide the desktop right-panel tab bar on mobile */
+            .card .tab-bar { display: none; }
         }
     </style>
 </head>
@@ -473,11 +479,18 @@
 
     <div id="auth-bar"></div>
 
+    <div id="mobile-tab-bar" style="display:none;">
+        <button class="tab-btn active" data-tab="tournaments" onclick="switchMobileTab('tournaments')">Tournaments</button>
+        <button class="tab-btn" data-tab="rankings" onclick="switchMobileTab('rankings')">Rankings</button>
+        <button class="tab-btn" data-tab="responses" onclick="switchMobileTab('responses')">Responses</button>
+        <button class="tab-btn" id="admin-mobile-tab-btn" data-tab="admin" style="display:none;" onclick="switchMobileTab('admin')">⚙ Admin</button>
+    </div>
+
     <div class="grid">
-        <!-- Left Side: Tournaments and Current Votes -->
-        <div>
+        <!-- Left Side: Tournaments -->
+        <div id="left-col">
             <div class="card">
-                <h2>Available International Circuits</h2>
+                <h2>Available International Tournament</h2>
                 <div id="month-filters" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;"></div>
                 <button type="button" class="mobile-only" onclick="toggleMobileFilters()" id="mobile-filter-btn" style="margin-bottom:10px; background:#334155; color:#e2e8f0; text-transform:none; letter-spacing:0; font-size:13px;">☰ Show Filters & Search</button>
                 <div style="overflow-x: auto;">
@@ -523,7 +536,7 @@
         </div>
 
         <!-- Right Side: Tabbed panel -->
-        <div>
+        <div id="right-col">
             <div class="card" style="padding:0; overflow:hidden;">
                 <div class="tab-bar">
                     <button class="tab-btn active" data-tab="rankings" onclick="switchTab('rankings')">Rankings</button>
@@ -670,6 +683,7 @@
                 <button type="button" onclick="signOut()" style="width:auto;padding:6px 14px;background:#334155;color:#e2e8f0;font-size:12px;margin-left:12px;">Sign Out</button>
             `;
             adminTabBtn.style.display = isAdmin() ? '' : 'none';
+            document.getElementById('admin-mobile-tab-btn').style.display = isAdmin() ? '' : 'none';
             if (!isAdmin() && document.getElementById('tab-admin').classList.contains('active')) {
                 switchTab('rankings');
             }
@@ -680,6 +694,7 @@
                 <button type="button" onclick="signInWithGoogle()" style="width:auto;padding:6px 16px;background:#4285f4;color:#fff;font-size:13px;font-weight:700;margin-left:14px;">Sign in with Google</button>
             `;
             adminTabBtn.style.display = 'none';
+            document.getElementById('admin-mobile-tab-btn').style.display = 'none';
             if (document.getElementById('tab-admin').classList.contains('active')) {
                 switchTab('rankings');
             }
@@ -762,6 +777,38 @@
             })
             .subscribe();
     }
+
+    function switchMobileTab(name) {
+        document.querySelectorAll('#mobile-tab-bar .tab-btn').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.querySelector(`#mobile-tab-bar .tab-btn[data-tab="${name}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+        const leftCol = document.getElementById('left-col');
+        const rightCol = document.getElementById('right-col');
+        if (name === 'tournaments') {
+            leftCol.style.display = '';
+            rightCol.style.display = 'none';
+        } else {
+            leftCol.style.display = 'none';
+            rightCol.style.display = '';
+            switchTab(name);
+        }
+    }
+
+    function initMobileState() {
+        if (window.innerWidth <= 700) switchMobileTab('tournaments');
+    }
+
+    window.addEventListener('resize', () => {
+        const leftCol = document.getElementById('left-col');
+        const rightCol = document.getElementById('right-col');
+        if (window.innerWidth > 700) {
+            leftCol.style.display = '';
+            rightCol.style.display = '';
+        } else {
+            const activeBtn = document.querySelector('#mobile-tab-bar .tab-btn.active');
+            if (activeBtn) switchMobileTab(activeBtn.dataset.tab);
+        }
+    });
 
     function switchTab(name) {
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -903,6 +950,7 @@
     async function init() {
         renderTournaments();
         renderSummary();
+        initMobileState();
         await initAuth();
         await tryLoadDefaultCsv();
         await loadResponses();
