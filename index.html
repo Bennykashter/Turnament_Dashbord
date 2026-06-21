@@ -336,6 +336,102 @@
         .modal-status-btns button.active-yes  { background: #10b981; color: #0f172a; border-color: #10b981; }
         .modal-status-btns button.active-maybe { background: #f59e0b; color: #0f172a; border-color: #f59e0b; }
         .modal-status-btns button.active-no   { background: #ef4444; color: #fff;    border-color: #ef4444; }
+
+        .mobile-only { display: none; }
+
+        @media (max-width: 700px) {
+            body { padding: 10px; }
+            header { padding: 18px 14px; margin-bottom: 14px; }
+            header h1 { font-size: 20px; }
+            header p.subtitle { font-size: 13px; }
+
+            .grid { gap: 14px; }
+            .card { padding: 16px; margin-bottom: 14px; }
+            h2 { font-size: 15px; }
+
+            #auth-bar { flex-wrap: wrap; gap: 8px; min-height: auto; }
+
+            .mobile-only { display: block; }
+
+            /* Tournament table — card rows */
+            .tournament-thead { display: none; }
+            .tournament-thead.open { display: table-header-group; }
+            .tournament-table tbody tr {
+                display: block;
+                border: 1px solid #334155;
+                border-radius: 8px;
+                padding: 14px;
+                margin-bottom: 12px;
+                background: #1e293b;
+            }
+            .tournament-table tbody tr:nth-child(even) { background: #1e293b; }
+            .tournament-table tbody td {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 4px 0;
+                border: none;
+                font-size: 13px;
+            }
+            .tournament-table tbody td::before {
+                content: attr(data-label);
+                color: #64748b;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                min-width: 68px;
+                flex-shrink: 0;
+                padding-top: 2px;
+            }
+            .tournament-table tbody td[data-label=""]::before { display: none; }
+
+            /* Roster table — card rows */
+            .roster-table thead { display: none; }
+            .roster-table tbody tr {
+                display: block;
+                border: 1px solid #334155;
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 10px;
+                background: #1e293b;
+            }
+            .roster-table tbody tr:nth-child(even) { background: #1e293b; }
+            .roster-table tbody td {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 3px 0;
+                border: none;
+                font-size: 13px;
+            }
+            .roster-table tbody td::before {
+                content: attr(data-label);
+                color: #64748b;
+                font-size: 11px;
+                text-transform: uppercase;
+                min-width: 68px;
+                flex-shrink: 0;
+                padding-top: 2px;
+            }
+
+            /* Modal — bottom sheet */
+            .modal-overlay.open { align-items: flex-end; }
+            .modal-box {
+                width: 100%;
+                max-width: 100%;
+                border-radius: 16px 16px 0 0;
+                padding: 24px 18px 36px;
+                max-height: 88vh;
+                overflow-y: auto;
+            }
+            .modal-status-btns { flex-direction: column; }
+            .modal-status-btns button { flex: none; }
+
+            /* Touch targets */
+            button { min-height: 44px; }
+            .t-name-btn, .month-filter-btn, .tip { min-height: 0; }
+            .month-filter-btn { padding: 7px 14px; font-size: 13px; }
+        }
     </style>
 </head>
 <body>
@@ -354,9 +450,10 @@
             <div class="card">
                 <h2>Available International Circuits</h2>
                 <div id="month-filters" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;"></div>
+                <button type="button" class="mobile-only" onclick="toggleMobileFilters()" id="mobile-filter-btn" style="margin-bottom:10px; background:#334155; color:#e2e8f0; text-transform:none; letter-spacing:0; font-size:13px;">☰ Show Filters & Search</button>
                 <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
+                    <table class="tournament-table">
+                        <thead class="tournament-thead">
                             <tr>
                                 <th>Tournament</th>
                                 <th>Location & Window</th>
@@ -411,7 +508,7 @@
             <div class="card">
                 <h2>Fighter Roster Responses</h2>
                 <div style="overflow-x: auto;">
-                    <table>
+                    <table class="roster-table">
                         <thead>
                             <tr>
                                 <th>Fighter</th>
@@ -624,6 +721,13 @@
                 loadResponses();
             })
             .subscribe();
+    }
+
+    function toggleMobileFilters() {
+        const thead = document.querySelector('.tournament-thead');
+        const btn = document.getElementById('mobile-filter-btn');
+        const open = thead.classList.toggle('open');
+        btn.textContent = open ? '✕ Hide Filters' : '☰ Show Filters & Search';
     }
 
     function escHtml(str) {
@@ -957,13 +1061,13 @@
                 : '';
             tbody.innerHTML += `
                 <tr>
-                    <td>${nameCell}</td>
-                    <td>${escHtml(t.location)}<br><small style="color:#94a3b8">${escHtml(t.dates)}</small></td>
-                    <td>${escHtml(t.disciplines || '-')}</td>
-                    <td><span class="badge ${badgeClass}">${escHtml(t.level)}</span></td>
-                    <td>$${t.flight}</td>
-                    <td>${attendeeBlock}<span class="votes-count">${t.votes} Attending</span></td>
-                    <td>${regCell}</td>
+                    <td data-label="Tournament">${nameCell}</td>
+                    <td data-label="Location">${escHtml(t.location)}<br><small style="color:#94a3b8">${escHtml(t.dates)}</small></td>
+                    <td data-label="Disciplines">${escHtml(t.disciplines || '-')}</td>
+                    <td data-label="Tier"><span class="badge ${badgeClass}">${escHtml(t.level)}</span></td>
+                    <td data-label="Flight">$${t.flight}</td>
+                    <td data-label="Attending">${attendeeBlock}<span class="votes-count">${t.votes} Attending</span></td>
+                    <td data-label="">${regCell}</td>
                 </tr>
             `;
         });
@@ -1086,10 +1190,10 @@
             }
             tbody.innerHTML += `
                 <tr>
-                    <td><strong>${escHtml(r.name)}</strong></td>
-                    <td>${escHtml(r.tournament)}</td>
-                    <td>${escHtml(r.attend)}</td>
-                    <td><small style="color:#cbd5e1">${escHtml(r.notes || '-')}</small></td>
+                    <td data-label="Fighter"><strong>${escHtml(r.name)}</strong></td>
+                    <td data-label="Tournament">${escHtml(r.tournament)}</td>
+                    <td data-label="Status">${escHtml(r.attend)}</td>
+                    <td data-label="Notes"><small style="color:#cbd5e1">${escHtml(r.notes || '-')}</small></td>
                     ${actionTd}
                 </tr>
             `;
