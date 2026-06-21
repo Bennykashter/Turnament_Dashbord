@@ -479,6 +479,18 @@
 
     <div id="auth-bar"></div>
 
+    <div style="margin-bottom:16px;">
+        <button type="button" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'; this.textContent=this.textContent.includes('▼')?'How to use ▲':'How to use ▼';" style="background:none;border:1px solid #334155;color:#64748b;font-size:12px;padding:5px 12px;width:auto;min-height:0;text-transform:none;letter-spacing:0;border-radius:6px;">How to use ▼</button>
+        <div style="display:none; margin-top:10px; padding:14px 18px; background:#1e293b; border:1px solid #334155; border-radius:8px; font-size:13px; line-height:1.9; color:#cbd5e1;">
+            <strong style="color:#fff; display:block; margin-bottom:6px;">Quick guide</strong>
+            <b style="color:#10b981;">1.</b> Use the <b>month buttons</b> to filter by time of year — or use the filter row to search by name, location, or tier.<br>
+            <b style="color:#10b981;">2.</b> <b>Sign in with Google</b> (button top-right) to participate.<br>
+            <b style="color:#10b981;">3.</b> <b>Click any tournament name</b> to log your attendance: Yes / Maybe / No, and add a weapon note.<br>
+            <b style="color:#10b981;">4.</b> The <b>Rankings tab</b> shows which events the club is leaning toward, sorted by votes.<br>
+            <b style="color:#10b981;">5.</b> Your response shows under the tournament name in green / amber / red. Click again to update it.
+        </div>
+    </div>
+
     <div id="mobile-tab-bar" style="display:none;">
         <button class="tab-btn active" data-tab="tournaments" onclick="switchMobileTab('tournaments')">Tournaments</button>
         <button class="tab-btn" data-tab="rankings" onclick="switchMobileTab('rankings')">Rankings</button>
