@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ministry of the Fence - Tournament Coordination Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -122,6 +123,26 @@
             transition: background 0.2s ease;
         }
         button:hover { background-color: #059669; }
+        button:disabled {
+            background-color: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        button:disabled:hover { background-color: #334155; }
+
+        #auth-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+            padding: 10px 18px;
+            background: #1e293b;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            font-size: 13px;
+            min-height: 42px;
+        }
         
         table {
             width: 100%;
@@ -183,6 +204,8 @@
         <h1>Ministry of the Fence</h1>
         <p class="subtitle">Official Team Tournament Alignment Dashboard</p>
     </header>
+
+    <div id="auth-bar"></div>
 
     <div class="grid">
         <!-- Left Side: Tournaments and Current Votes -->
@@ -275,7 +298,7 @@
                     <label for="fighter-notes">Combat Notes / Weapon Class:</label>
                     <input type="text" id="fighter-notes" placeholder="e.g., Longsword, Saber, or Rapier focus">
                 </div>
-                <button onclick="submitVote()">Submit Entry</button>
+                <button id="submit-btn" onclick="submitVote()" disabled title="Sign in with Google to submit your attendance">Submit Entry</button>
             </div>
 
             <div class="card">
@@ -292,6 +315,133 @@
 </div>
 
 <script>
+    // ── Supabase configuration ──────────────────────────────────────────────
+    // Replace these two values with your project's URL and anon key from
+    // Supabase → Project Settings → API
+    const SUPABASE_URL = 'https://yfnzuwxjuolofhitjpzx.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_nj7dSjFL_rnq2A7VUB2iBw_Z-5mZfNQ';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+
+    // ── Auth ────────────────────────────────────────────────────────────────
+    async function initAuth() {
+        const { data: { session } } = await sb.auth.getSession();
+        currentUser = session?.user ?? null;
+        updateAuthUI();
+        sb.auth.onAuthStateChange((_event, session) => {
+            currentUser = session?.user ?? null;
+            updateAuthUI();
+        });
+    }
+
+    function updateAuthUI() {
+        const bar = document.getElementById('auth-bar');
+        const nameInput = document.getElementById('fighter-name');
+        const submitBtn = document.getElementById('submit-btn');
+
+        if (currentUser) {
+            const displayName = currentUser.user_metadata?.full_name || currentUser.email;
+            bar.innerHTML = `
+                <span style="color:#10b981; font-weight:600;">Signed in as ${escHtml(displayName)}</span>
+                <button type="button" onclick="signOut()" style="width:auto;padding:6px 14px;background:#334155;color:#e2e8f0;font-size:12px;margin-left:12px;">Sign Out</button>
+            `;
+            nameInput.value = displayName;
+            nameInput.readOnly = true;
+            nameInput.style.opacity = '0.7';
+            submitBtn.disabled = false;
+            submitBtn.title = '';
+        } else {
+            bar.innerHTML = `
+                <span style="color:#94a3b8;">Sign in to submit your attendance choices</span>
+                <button type="button" onclick="signInWithGoogle()" style="width:auto;padding:6px 16px;background:#4285f4;color:#fff;font-size:13px;font-weight:700;margin-left:14px;">Sign in with Google</button>
+            `;
+            nameInput.value = '';
+            nameInput.readOnly = false;
+            nameInput.style.opacity = '1';
+            submitBtn.disabled = true;
+            submitBtn.title = 'Sign in with Google to submit your attendance';
+        }
+    }
+
+    async function signInWithGoogle() {
+        await sb.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: window.location.origin + window.location.pathname }
+        });
+    }
+
+    async function signOut() {
+        await sb.auth.signOut();
+    }
+
+    // ── Database ────────────────────────────────────────────────────────────
+    async function loadResponses() {
+        const { data, error } = await sb
+            .from('fighter_responses')
+            .select('*')
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('Failed to load responses:', error.message);
+            return;
+        }
+
+        responses.length = 0;
+        data.forEach(row => {
+            responses.push({
+                name: row.fighter_name,
+                tournament: row.tournament_name,
+                attend: row.attendance_status,
+                notes: row.combat_notes || ''
+            });
+        });
+
+        tournaments.forEach(t => { t.votes = 0; });
+        data.forEach(row => {
+            if (row.attendance_status === 'Yes' || row.attendance_status === 'Maybe') {
+                const t = tournaments.find(t => t.name === row.tournament_name);
+                if (t) t.votes += 1;
+            }
+        });
+
+        renderTournaments();
+        renderSummary();
+        renderLog();
+    }
+
+    async function saveResponse(userId, fighterName, tournamentName, attend, notes) {
+        const { error } = await sb
+            .from('fighter_responses')
+            .upsert({
+                user_id: userId,
+                fighter_name: fighterName,
+                tournament_name: tournamentName,
+                attendance_status: attend,
+                combat_notes: notes
+            }, { onConflict: 'user_id,tournament_name' });
+
+        if (error) {
+            alert('Failed to save response: ' + error.message);
+            return false;
+        }
+        return true;
+    }
+
+    function setupRealtime() {
+        sb.channel('fighter_responses_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'fighter_responses' }, () => {
+                loadResponses();
+            })
+            .subscribe();
+    }
+
+    function escHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+
     const defaultTournaments = [
         { id: 1, name: "BOHEMA Tournament", location: "Prague, Czech Republic", dates: "Mid-to-late Sept 2026", disciplines: "Mixed Steel Longsword, Women's Longsword", level: "Tier B", flight: 440, votes: 0 },
         { id: 2, name: "Tyrnhaw 2026", location: "Trnava, Slovakia", dates: "Oct 17-18, 2026", disciplines: "Men's & Women's Longsword, Men's & Women's Sabre", level: "Tier A", flight: 420, votes: 0 },
@@ -302,7 +452,7 @@
     ];
 
     let tournaments = [...defaultTournaments];
-    const responses = [];
+    let responses = [];
     const filters = {
         name: '',
         location: '',
@@ -313,11 +463,14 @@
         minAttending: null
     };
 
-    function init() {
+    async function init() {
         renderTournaments();
         populateDropdown();
         renderSummary();
-        tryLoadDefaultCsv();
+        await initAuth();
+        await tryLoadDefaultCsv();
+        await loadResponses();
+        setupRealtime();
     }
 
     function parseCsv(text) {
@@ -361,19 +514,15 @@
         return rows;
     }
 
-    function tryLoadDefaultCsv() {
-        const defaultCsvPath = 'HEMA_Europe_Planner.csv';
-        fetch(defaultCsvPath)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('CSV file not available');
-                }
-                return response.text();
-            })
-            .then(text => loadCsvText(text))
-            .catch(() => {
-                // Fallback to manual CSV upload if the file cannot be loaded from the same folder.
-            });
+    async function tryLoadDefaultCsv() {
+        try {
+            const res = await fetch('HEMA_Europe_Planner.csv');
+            if (!res.ok) throw new Error('CSV file not available');
+            const text = await res.text();
+            loadCsvText(text);
+        } catch {
+            // Fallback to manual CSV upload if the file cannot be loaded from the same folder.
+        }
     }
 
     function loadCsvFromFile() {
@@ -386,6 +535,7 @@
         const reader = new FileReader();
         reader.onload = function() {
             loadCsvText(reader.result);
+            loadResponses();
         };
         reader.readAsText(input.files[0], 'UTF-8');
     }
@@ -544,7 +694,12 @@
         updateFilter();
     }
 
-    function submitVote() {
+    async function submitVote() {
+        if (!currentUser) {
+            alert('Please sign in with Google to submit your attendance.');
+            return;
+        }
+
         const name = document.getElementById('fighter-name').value.trim();
         const tId = parseInt(document.getElementById('tournament-select').value);
         const attend = document.getElementById('attendance-select').value;
@@ -556,17 +711,21 @@
         }
 
         const tObj = tournaments.find(t => t.id === tId);
-        responses.push({ name, tournament: tObj.name, attend, notes });
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving…';
 
-        if (attend === 'Yes' || attend === 'Maybe') {
-            tObj.votes += 1;
+        const saved = await saveResponse(currentUser.id, name, tObj.name, attend, notes);
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Entry';
+
+        if (saved) {
+            document.getElementById('fighter-notes').value = '';
+            // Realtime subscription will call loadResponses() automatically;
+            // call it explicitly as a fallback in case realtime is not yet connected.
+            await loadResponses();
         }
-
-        renderTournaments();
-        renderSummary();
-        renderLog();
-
-        document.getElementById('fighter-notes').value = '';
     }
 
     function renderLog() {
