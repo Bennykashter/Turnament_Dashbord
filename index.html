@@ -1140,11 +1140,12 @@
 
     function renderMonthButtons() {
         const container = document.getElementById('month-filters');
-        const unique = [...new Set(tournaments.map(t => t.month).filter(Boolean))];
-        unique.sort((a, b) => MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b));
-        container.innerHTML = unique.map(m =>
-            `<button type="button" class="month-filter-btn${filters.months.has(m) ? ' active' : ''}" onclick="toggleMonthFilter('${m}')">${m}</button>`
-        ).join('');
+        const hasData = new Set(tournaments.map(t => t.month).filter(Boolean));
+        container.innerHTML = MONTH_ORDER.map(m => {
+            const empty = !hasData.has(m);
+            const active = filters.months.has(m);
+            return `<button type="button" class="month-filter-btn${active ? ' active' : ''}" onclick="toggleMonthFilter('${m}')" style="${empty ? 'opacity:0.35;' : ''}" title="${empty ? 'No tournaments listed yet' : ''}">${m}</button>`;
+        }).join('');
     }
 
     function toggleMonthFilter(month) {
