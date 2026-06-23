@@ -23,7 +23,7 @@ For every request, apply these strict rules to build the dataset:
    - Level / Tier (HEMA Ratings Tier classification A, B, or C)
    - Flight Cost (USD)
    - Estimated Living Cost (USD)
-   - Registration Link (Direct club site, Hemascorecard, or Hemagon)
+   - Registration Link (Direct club site, Hemascorecard, or Hemagon). Facebook links are only acceptable if they point to the tournament's own event page or official club/organization page — never to an individual person's profile. If no valid Facebook event/org page exists, link to the source where the information was found (aggregator, federation calendar, etc.).
 3. FLIGHT LOGISTICS MATH (CRITICAL): Flight cost estimates must be presented in USD and assume:
    - A ROUND-TRIP ticket originating from Tel Aviv (TLV).
    - Travel dates scheduled CLOSE TO THE WEEKEND.

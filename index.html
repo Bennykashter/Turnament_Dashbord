@@ -525,6 +525,9 @@
         <div id="left-col">
             <div class="card">
                 <h2>Available International Tournament</h2>
+                <div style="margin-bottom:10px;">
+                    <button type="button" class="month-filter-btn active" id="future-only-btn" onclick="toggleFutureFilter()">Future Only</button>
+                </div>
                 <div id="month-filters" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;"></div>
                 <button type="button" class="mobile-only" onclick="toggleMobileFilters()" id="mobile-filter-btn" style="margin-bottom:10px; background:#334155; color:#e2e8f0; text-transform:none; letter-spacing:0; font-size:13px;">☰ Show Filters & Search</button>
                 <div style="overflow-x: auto;">
@@ -992,8 +995,37 @@
         level: '',
         maxFlight: null,
         minAttending: null,
-        months: new Set()
+        months: new Set(),
+        futureOnly: true
     };
+
+    function parseTournamentStartDate(dateStr) {
+        if (!dateStr) return null;
+        const cleaned = dateStr.replace(/^~/, '').replace(/\(.*?\)/g, '').trim();
+        if (!cleaned || /^tbc$/i.test(cleaned)) return null;
+        const MONTHS = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
+        const yearMatch = cleaned.match(/\b(\d{4})\b/);
+        if (!yearMatch) return null;
+        const year = parseInt(yearMatch[1], 10);
+        const mdMatch = cleaned.match(/\b([A-Za-z]{3,})\s+(\d{1,2})/);
+        if (mdMatch) {
+            const mon = MONTHS[mdMatch[1].toLowerCase().slice(0, 3)];
+            if (mon !== undefined) return new Date(year, mon, parseInt(mdMatch[2], 10));
+        }
+        const mMatch = cleaned.match(/\b([A-Za-z]{3,})\b/);
+        if (mMatch) {
+            const mon = MONTHS[mMatch[1].toLowerCase().slice(0, 3)];
+            if (mon !== undefined) return new Date(year, mon, 1);
+        }
+        return null;
+    }
+
+    function toggleFutureFilter() {
+        filters.futureOnly = !filters.futureOnly;
+        document.getElementById('future-only-btn').classList.toggle('active', filters.futureOnly);
+        renderTournaments();
+        renderSummary();
+    }
 
     async function init() {
         renderTournaments();
@@ -1135,6 +1167,8 @@
     }
 
     function getFilteredTournaments() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
         return tournaments.filter(t => {
             const matchesName = !filters.name || t.name.toLowerCase().includes(filters.name.toLowerCase());
             const matchesLocation = !filters.location || (
@@ -1146,7 +1180,11 @@
             const matchesMaxFlight = filters.maxFlight === null || t.flight <= filters.maxFlight;
             const matchesAttending = filters.minAttending === null || t.votes >= filters.minAttending;
             const matchesMonth = filters.months.size === 0 || filters.months.has(t.month);
-            return matchesName && matchesLocation && matchesDisciplines && matchesLevel && matchesMaxFlight && matchesAttending && matchesMonth;
+            const matchesFuture = !filters.futureOnly || (() => {
+                const d = parseTournamentStartDate(t.dates);
+                return !d || d >= today;
+            })();
+            return matchesName && matchesLocation && matchesDisciplines && matchesLevel && matchesMaxFlight && matchesAttending && matchesMonth && matchesFuture;
         });
     }
 
@@ -1198,12 +1236,17 @@
             const nameCell = currentUser
                 ? `<button type="button" class="t-name-btn" onclick="openAttendanceModal(${t.id})">${escHtml(t.name)}</button>${myStatusTag}`
                 : `<strong>${escHtml(t.name)}</strong>`;
-            const attendees = responses
-                .filter(r => (r.attend === 'Yes' || r.attend === 'Maybe') && r.tournament === t.name)
-                .map(r => escHtml(r.name));
+            const attendees = currentUser
+                ? responses
+                    .filter(r => (r.attend === 'Yes' || r.attend === 'Maybe') && r.tournament === t.name)
+                    .map(r => escHtml(r.name))
+                : [];
             const attendeeBlock = attendees.length
                 ? `<div class="attendee-names">${attendees.join(', ')}</div>`
                 : '';
+            const attendingCell = currentUser
+                ? `${attendeeBlock}<span class="votes-count">${t.votes} Attending</span>`
+                : `<span style="color:#64748b; font-size:12px; font-style:italic;">Sign in to view</span>`;
             tbody.innerHTML += `
                 <tr>
                     <td data-label="Tournament">${nameCell}</td>
@@ -1211,7 +1254,7 @@
                     <td data-label="Disciplines">${escHtml(t.disciplines || '-')}</td>
                     <td data-label="Tier"><span class="badge ${badgeClass}">${escHtml(t.level)}</span></td>
                     <td data-label="Flight">$${t.flight}</td>
-                    <td data-label="Attending">${attendeeBlock}<span class="votes-count">${t.votes} Attending</span></td>
+                    <td data-label="Attending">${attendingCell}</td>
                     <td data-label="">${regCell}</td>
                 </tr>
             `;
@@ -1269,6 +1312,8 @@
         document.getElementById('filter-tier').value = '';
         document.getElementById('filter-max-flight').value = '';
         filters.months.clear();
+        filters.futureOnly = true;
+        document.getElementById('future-only-btn').classList.add('active');
         updateFilter();
     }
 
