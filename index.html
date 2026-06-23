@@ -1276,10 +1276,12 @@
         }
 
         withVotes.forEach(t => {
-            const names = responses
-                .filter(r => (r.attend === 'Yes' || r.attend === 'Maybe') && r.tournament === t.name)
-                .map(r => escHtml(r.name))
-                .join(', ');
+            const names = currentUser
+                ? responses
+                    .filter(r => (r.attend === 'Yes' || r.attend === 'Maybe') && r.tournament === t.name)
+                    .map(r => escHtml(r.name))
+                    .join(', ')
+                : '';
             container.innerHTML += `
                 <div class="summary-item">
                     <div>
@@ -1363,8 +1365,12 @@
     function renderLog() {
         const tbody = document.getElementById('log-rows');
         tbody.innerHTML = '';
+        if (!currentUser) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b; padding:20px;">Sign in to view fighter responses.</td></tr>';
+            return;
+        }
         const admin = isAdmin();
-        const cols = currentUser ? 5 : 4;
+        const cols = 5;
         if (responses.length === 0) {
             tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center; color:#64748b;">No responses logged yet.</td></tr>`;
             return;
