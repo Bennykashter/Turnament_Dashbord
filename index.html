@@ -584,9 +584,7 @@
                 <!-- Rankings tab -->
                 <div id="tab-rankings" class="tab-panel active">
                     <div id="summary-ranking"></div>
-                    <div style="margin-top: 18px;">
-                        <button onclick="exportToExcel()">Export All Data to Excel</button>
-                    </div>
+                    <div id="export-btn-container" style="margin-top: 18px;"></div>
                 </div>
 
                 <!-- Responses tab -->
@@ -1300,6 +1298,12 @@
     function renderSummary() {
         const container = document.getElementById('summary-ranking');
         container.innerHTML = '';
+        const exportContainer = document.getElementById('export-btn-container');
+        if (exportContainer) {
+            exportContainer.innerHTML = isAdmin()
+                ? '<button onclick="exportToExcel()">Export All Data to Excel</button>'
+                : '';
+        }
 
         const withVotes = [...getFilteredTournaments()]
             .filter(t => t.votes > 0)
