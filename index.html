@@ -899,6 +899,14 @@
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    function safeUrl(url) {
+        if (!url) return '';
+        try {
+            const u = new URL(url);
+            return (u.protocol === 'https:' || u.protocol === 'http:') ? url : '';
+        } catch { return ''; }
+    }
+
     // ────────────────────────────────────────────────────────────────────────
 
     const defaultTournaments = [
@@ -1256,8 +1264,8 @@
 
         filtered.forEach(t => {
             const badgeClass = t.level === 'Tier A' ? 'badge-a' : t.level === 'Tier B' ? 'badge-b' : 'badge-c';
-            const regCell = t.regLink
-                ? `<a href="${t.regLink}" target="_blank" rel="noopener" style="color:#C0272D; font-weight:600; text-decoration:none;">Register →</a>`
+            const regCell = safeUrl(t.regLink)
+                ? `<a href="${safeUrl(t.regLink)}" target="_blank" rel="noopener noreferrer" style="color:#C0272D; font-weight:600; text-decoration:none;">Register →</a>`
                 : '-';
             const myResponse = currentUser
                 ? responses.find(r => r.user_id === currentUser.id && r.tournament === t.name)
