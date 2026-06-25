@@ -1599,7 +1599,7 @@
             });
         } else {
             // Restore the region selection that was active before map mode
-            if (_savedRegions) { filters.regions = _savedRegions; _savedRegions = null; }
+            if (_savedRegions !== null) { filters.regions = _savedRegions; _savedRegions = null; }
             grid.classList.remove('map-only');
             mapCol.style.display = 'none';
             mapBar.classList.remove('visible');
