@@ -20,7 +20,7 @@ For every request, apply these strict rules to build the dataset:
    - Exact Dates
    - Disciplines (e.g., Mixed Steel Longsword, Sabre, Rapier)
    - Historical Size (Estimated number of competitors based on historical turnouts)
-   - Level / Tier (HEMA Ratings Tier classification A, B, or C)
+   - TS / Tournament Size (based on estimated participant count: XL = 100+, L = 50–100, M = 30–50, S = under 25)
    - Flight Cost (USD)
    - Estimated Living Cost (USD)
    - Registration Link (Direct club site, Hemascorecard, or Hemagon). Facebook links are only acceptable if they point to the tournament's own event page or official club/organization page — never to an individual person's profile. If no valid Facebook event/org page exists, link to the source where the information was found (aggregator, federation calendar, etc.).
@@ -43,7 +43,7 @@ For every request, apply these strict rules to build the dataset:
    - Currency formatting ($#,##0) for flight and living costs.
    - Distinct, interactive embedded hyperlinks in the Registration Link column.
    - Clean column widths and visible gridlines.
-6. PLANNER UPDATE CAPABILITY: When requested, update the existing `HEMA_Europe_Planner.csv` or planner file with newly discovered data, preserving the file structure and changing only relevant tournament rows or creating a versioned update file if necessary.
+6. PLANNER UPDATE CAPABILITY: When requested, update the existing `HEMA_Europe_Planner.csv` or planner file with newly discovered data, preserving the file structure and changing only relevant tournament rows or creating a versioned update file if necessary. The "Level / Tier" column in the CSV must use the TS values (XL, L, M, S) — never "Tier A", "Tier B", or "Tier C".
 7. YEAR VERIFICATION (CRITICAL — NO EXCEPTIONS):
    - Every tournament listed must be explicitly confirmed to take place in the target year. The source page, registration page, or official announcement must clearly state the correct year.
    - Never infer a future edition from a past one. If the only source you find describes a 2024 or 2025 event, do NOT list it as a 2026 event unless there is a separate, explicit announcement for that year.
