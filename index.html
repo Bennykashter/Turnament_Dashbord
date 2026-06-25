@@ -1522,9 +1522,10 @@
             const myStatusHtml = myResp
                 ? `<div class="map-popup-mystatus" style="color:${statusColor[myResp.attend] || '#94a3b8'};">You: ${myResp.attend}</div>`
                 : '';
-            const regBtn = safeUrl(t.regLink)
+            const isGenericReg = !t.regLink || t.regLink === 'https://hemaratings.com/events/';
+            const regBtn = !isGenericReg && safeUrl(t.regLink)
                 ? `<div class="map-popup-link"><a href="${safeUrl(t.regLink)}" target="_blank" rel="noopener">Register →</a></div>`
-                : '';
+                : `<div style="color:#f59e0b;font-weight:700;font-size:12px;" title="No specific registration page — date and location may be unverified">? Unverified</div>`;
             const attendBtn = currentUser
                 ? `<button class="map-popup-attend" onclick="openAttendanceModal(${t.id})">Attend</button>`
                 : '';
@@ -1854,9 +1855,13 @@
         }
         data.forEach(t => {
             const badgeClass = t.level === 'XL' ? 'badge-a' : t.level === 'L' ? 'badge-b' : t.level === 'S' ? 'badge-s' : 'badge-c';
-            const regCell = safeUrl(t.regLink)
-                ? `<a href="${safeUrl(t.regLink)}" target="_blank" rel="noopener noreferrer" style="color:#C0272D; font-weight:600; text-decoration:none;">Register →</a>`
-                : '-';
+            const isGenericLink = !t.regLink || t.regLink === 'https://hemaratings.com/events/';
+            const unverifiedBadge = isGenericLink
+                ? `<span title="No specific registration page found — date and location may be unverified" style="color:#f59e0b;font-weight:700;font-size:13px;cursor:help;margin-left:4px;">?</span>`
+                : '';
+            const regCell = !isGenericLink && safeUrl(t.regLink)
+                ? `<a href="${safeUrl(t.regLink)}" target="_blank" rel="noopener noreferrer" style="color:#C0272D; font-weight:600; text-decoration:none;">Register →</a>${unverifiedBadge}`
+                : unverifiedBadge || '-';
             const myResponse = currentUser
                 ? responses.find(r => r.user_id === currentUser.id && r.tournament === t.name)
                 : null;
