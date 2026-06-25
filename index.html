@@ -64,8 +64,9 @@
         .grid.map-split {
             grid-template-columns: 420px 1fr;
         }
-        .grid.map-split #right-col { display: none; }
-        .grid.map-split #map-col   { display: block; }
+        .grid.map-split #right-col      { display: none; }
+        .grid.map-split #map-col        { display: block; }
+        .grid.map-split #region-filters { display: none; }
 
         /* Hide extra table columns in map split mode */
         .grid.map-split .tournament-table th:nth-child(2),
@@ -1488,12 +1489,20 @@
             requestAnimationFrame(() => {
                 initMap();
                 _map.invalidateSize();
+                _map.on('moveend', filterByMapBounds);
                 updateMapMarkers(getFilteredTournaments());
+                // fitBounds inside updateMapMarkers fires moveend which updates the list;
+                // also call directly as a fallback for cases where bounds don't change
+                filterByMapBounds();
             });
         } else {
             grid.classList.remove('map-split');
             mapCol.style.display = 'none';
-            if (_map) { _map.remove(); _map = null; _markers = []; }
+            if (_map) {
+                _map.off('moveend', filterByMapBounds);
+                _map.remove(); _map = null; _markers = [];
+            }
+            renderTableOnly();
         }
     }
 
@@ -1724,17 +1733,14 @@
         renderTableOnly();
     }
 
-    function renderTableOnly() {
+    function _renderRows(data, emptyMsg) {
         const tbody = document.getElementById('tournament-rows');
-        const filtered = getFilteredTournaments();
         tbody.innerHTML = '';
-
-        if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#64748b; padding:20px;">No tournaments match the current filters.</td></tr>';
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#64748b; padding:20px;">${emptyMsg || 'No tournaments match the current filters.'}</td></tr>`;
             return;
         }
-
-        filtered.forEach(t => {
+        data.forEach(t => {
             const badgeClass = t.level === 'XL' ? 'badge-a' : t.level === 'L' ? 'badge-b' : t.level === 'S' ? 'badge-s' : 'badge-c';
             const regCell = safeUrl(t.regLink)
                 ? `<a href="${safeUrl(t.regLink)}" target="_blank" rel="noopener noreferrer" style="color:#C0272D; font-weight:600; text-decoration:none;">Register →</a>`
@@ -1776,7 +1782,27 @@
                 </tr>
             `;
         });
+    }
+
+    function renderTableOnly() {
+        const filtered = getFilteredTournaments();
+        _renderRows(filtered);
         updateMapMarkers(filtered);
+        // In split mode the list is further narrowed by map viewport (moveend handles it,
+        // but also apply immediately so the list reflects the current view right away)
+        if (_map && document.getElementById('main-grid').classList.contains('map-split')) {
+            filterByMapBounds();
+        }
+    }
+
+    function filterByMapBounds() {
+        if (!_map) return;
+        const bounds = _map.getBounds();
+        const inView = getFilteredTournaments().filter(t => {
+            const c = getCoords(t.location);
+            return c && bounds.contains(L.latLng(c[0], c[1]));
+        });
+        _renderRows(inView, 'No tournaments in current map view — zoom out or pan to see more.');
     }
 
 
