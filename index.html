@@ -66,7 +66,8 @@
         }
         .grid.map-split #right-col      { display: none; }
         .grid.map-split #map-col        { display: block; }
-        .grid.map-split #region-filters { display: none; }
+        /* !important overrides the inline style="display:flex" on the element */
+        .grid.map-split #region-filters { display: none !important; }
 
         /* Hide extra table columns in map split mode */
         .grid.map-split .tournament-table th:nth-child(2),
@@ -81,10 +82,26 @@
         .grid.map-split .tournament-table td:nth-child(7) { display: none; }
         .grid.map-split .filter-row { display: none; }
 
-        /* Scrollable list in split mode */
+        /* Equal-height columns: both cards stretch to 680px, content scrolls inside */
+        .grid.map-split #left-col,
+        .grid.map-split #map-col {
+            display: flex;
+            flex-direction: column;
+        }
+        .grid.map-split #left-col .card,
+        .grid.map-split #map-col .card {
+            flex: 1;
+            height: 680px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+        /* Table area fills remaining card height and scrolls */
         .grid.map-split #tournament-rows-wrap {
-            max-height: 560px;
+            flex: 1;
             overflow-y: auto;
+            min-height: 0;
         }
         .grid.map-split #tournament-rows-wrap::-webkit-scrollbar { width: 5px; }
         .grid.map-split #tournament-rows-wrap::-webkit-scrollbar-track { background: #080d14; }
@@ -127,10 +144,16 @@
         #map-col { display: none; }
         #map-col .card { margin-bottom: 0; padding: 16px; }
         #leaflet-map {
-            height: 560px;
+            height: 560px; /* fallback for full-list mode if ever shown standalone */
             border-radius: 8px;
             overflow: hidden;
             background: #0a0f1a;
+        }
+        /* In split mode the map fills the card flex space */
+        .grid.map-split #leaflet-map {
+            flex: 1;
+            height: auto;
+            min-height: 0;
         }
         .map-legend {
             display: flex;
