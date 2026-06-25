@@ -1282,6 +1282,7 @@
         const levelIndex = getIndex('Level / Tier');
         const flightIndex = getIndex('Flight Cost (With Gear)');
         const regLinkIndex = getIndex('Registration Link');
+        const regionIndex = getIndex('Region');
 
         if (
             idIndex === -1 ||
@@ -1311,6 +1312,7 @@
                 disciplines: (row[disciplinesIndex] || '').trim(),
                 level: (row[levelIndex] || '').trim(),
                 flight: parseInt((row[flightIndex] || '').replace(/[^0-9]/g, ''), 10) || 0,
+                region: regionIndex !== -1 ? (row[regionIndex] || 'Europe').trim() : 'Europe',
                 votes: 0,
                 regLink: regLinkIndex !== -1 ? (row[regLinkIndex] || '').trim() : ''
             });
