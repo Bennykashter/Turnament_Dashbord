@@ -1484,6 +1484,7 @@
     }
 
     let currentMapView = 'list';
+    let _savedRegions = null;
     let _map = null;
     let _markers = [];
     const MARKER_COLOR = { XL: '#C0272D', L: '#3b82f6', M: '#475569', S: '#22c55e' };
@@ -1584,6 +1585,9 @@
         document.getElementById('view-map-btn').classList.toggle('active', view === 'map');
 
         if (view === 'map') {
+            // Save the list's region selection and activate all regions for the map
+            _savedRegions = new Set(filters.regions);
+            filters.regions = new Set(ALL_REGIONS);
             grid.classList.add('map-only');
             mapCol.style.display = 'block';
             mapBar.classList.add('visible');
@@ -1594,11 +1598,13 @@
                 updateMapMarkers(getFilteredTournaments());
             });
         } else {
+            // Restore the region selection that was active before map mode
+            if (_savedRegions) { filters.regions = _savedRegions; _savedRegions = null; }
             grid.classList.remove('map-only');
             mapCol.style.display = 'none';
             mapBar.classList.remove('visible');
             if (_map) { _map.remove(); _map = null; _markers = []; }
-            renderTableOnly();
+            renderTournaments();
         }
     }
 
