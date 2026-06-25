@@ -1221,7 +1221,7 @@
     function toggleFutureFilter() {
         filters.futureOnly = !filters.futureOnly;
         document.getElementById('future-only-btn').classList.toggle('active', filters.futureOnly);
-        renderTournaments();
+        renderTableOnly();
         renderSummary();
     }
 
@@ -1408,13 +1408,17 @@
         } else {
             filters.regions.add(region);
         }
-        renderTournaments();
+        ALL_REGIONS.forEach(r => {
+            const btn = document.querySelector(`#region-filters button[onclick="toggleRegionFilter('${r}')"]`);
+            if (btn) btn.classList.toggle('active', filters.regions.has(r));
+        });
+        renderTableOnly();
         renderSummary();
     }
 
     function toggleHideRestricted() {
         filters.hideRestricted = document.getElementById('hide-restricted').checked;
-        renderTournaments();
+        renderTableOnly();
         renderSummary();
     }
 
@@ -1434,13 +1438,21 @@
         } else {
             filters.months.add(month);
         }
-        renderTournaments();
+        MONTH_ORDER.forEach(m => {
+            const btn = document.querySelector(`#month-filters button[onclick="toggleMonthFilter('${m}')"]`);
+            if (btn) btn.classList.toggle('active', filters.months.has(m));
+        });
+        renderTableOnly();
         renderSummary();
     }
 
     function renderTournaments() {
         renderRegionButtons();
         renderMonthButtons();
+        renderTableOnly();
+    }
+
+    function renderTableOnly() {
         const tbody = document.getElementById('tournament-rows');
         const filtered = getFilteredTournaments();
         tbody.innerHTML = '';
@@ -1543,7 +1555,7 @@
         filters.maxFlight = Number.isFinite(maxFlightValue) ? maxFlightValue : null;
         filters.minAttending = Number.isFinite(minAttendingValue) ? minAttendingValue : null;
 
-        renderTournaments();
+        renderTableOnly();
         renderSummary();
     }
 
@@ -1558,6 +1570,14 @@
         document.getElementById('hide-restricted').checked = false;
         filters.futureOnly = true;
         document.getElementById('future-only-btn').classList.add('active');
+        MONTH_ORDER.forEach(m => {
+            const btn = document.querySelector(`#month-filters button[onclick="toggleMonthFilter('${m}')"]`);
+            if (btn) btn.classList.remove('active');
+        });
+        ALL_REGIONS.forEach(r => {
+            const btn = document.querySelector(`#region-filters button[onclick="toggleRegionFilter('${r}')"]`);
+            if (btn) btn.classList.toggle('active', r === 'Europe');
+        });
         updateFilter();
     }
 
