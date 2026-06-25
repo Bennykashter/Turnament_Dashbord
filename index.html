@@ -61,51 +61,31 @@
             grid-template-columns: 2.2fr 1fr;
             gap: 20px;
         }
-        .grid.map-split {
-            grid-template-columns: 420px 1fr;
-        }
-        .grid.map-split #right-col      { display: none; }
-        .grid.map-split #map-col        { display: block; }
-        /* !important overrides the inline style="display:flex" on the element */
-        .grid.map-split #region-filters { display: none !important; }
+        /* Map Only mode: full-width map, no list or rankings panel */
+        .grid.map-only { grid-template-columns: 1fr; }
+        .grid.map-only #left-col  { display: none; }
+        .grid.map-only #right-col { display: none; }
+        .grid.map-only #map-col   { display: block; }
+        .grid.map-only #map-col .card { margin-bottom: 0; }
 
-        /* Hide extra table columns in map split mode */
-        .grid.map-split .tournament-table th:nth-child(2),
-        .grid.map-split .tournament-table th:nth-child(3),
-        .grid.map-split .tournament-table th:nth-child(4),
-        .grid.map-split .tournament-table th:nth-child(6),
-        .grid.map-split .tournament-table th:nth-child(7),
-        .grid.map-split .tournament-table td:nth-child(2),
-        .grid.map-split .tournament-table td:nth-child(3),
-        .grid.map-split .tournament-table td:nth-child(4),
-        .grid.map-split .tournament-table td:nth-child(6),
-        .grid.map-split .tournament-table td:nth-child(7) { display: none; }
-        .grid.map-split .filter-row { display: none; }
-
-        /* Equal-height columns: both cards stretch to 680px, content scrolls inside */
-        .grid.map-split #left-col,
-        .grid.map-split #map-col {
-            display: flex;
+        /* Map filter bar (shown above map in Map Only mode) */
+        #map-mode-bar {
+            display: none;
+            background: linear-gradient(160deg, #0f1623 0%, #111827 100%);
+            border: 1px solid #1a2540;
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            gap: 10px;
             flex-direction: column;
         }
-        .grid.map-split #left-col .card,
-        .grid.map-split #map-col .card {
-            flex: 1;
-            height: 680px;
+        #map-mode-bar.visible { display: flex; }
+        #map-mode-bar .mbar-row {
             display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            margin-bottom: 0;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
         }
-        /* Table area fills remaining card height and scrolls */
-        .grid.map-split #tournament-rows-wrap {
-            flex: 1;
-            overflow-y: auto;
-            min-height: 0;
-        }
-        .grid.map-split #tournament-rows-wrap::-webkit-scrollbar { width: 5px; }
-        .grid.map-split #tournament-rows-wrap::-webkit-scrollbar-track { background: #080d14; }
-        .grid.map-split #tournament-rows-wrap::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 4px; }
 
         /* View mode toggle */
         .view-mode-toggle {
@@ -142,18 +122,13 @@
 
         /* Map column card */
         #map-col { display: none; }
-        #map-col .card { margin-bottom: 0; padding: 16px; }
+        #map-col .card { padding: 16px; }
         #leaflet-map {
-            height: 560px; /* fallback for full-list mode if ever shown standalone */
+            height: calc(100vh - 300px);
+            min-height: 500px;
             border-radius: 8px;
             overflow: hidden;
             background: #0a0f1a;
-        }
-        /* In split mode the map fills the card flex space */
-        .grid.map-split #leaflet-map {
-            flex: 1;
-            height: auto;
-            min-height: 0;
         }
         .map-legend {
             display: flex;
@@ -197,13 +172,11 @@
 
         @media (max-width: 950px) {
             .grid { grid-template-columns: 1fr; }
-            .grid.map-split { grid-template-columns: 1fr; }
-            .grid.map-split #map-col { display: none; }
-            .grid.map-split #right-col { display: block; }
-            .grid.map-split .tournament-table th,
-            .grid.map-split .tournament-table td { display: revert; }
-            .grid.map-split .filter-row { display: revert; }
             .view-mode-toggle { display: none; }
+            #map-mode-bar { display: none !important; }
+            .grid.map-only #left-col  { display: block; }
+            .grid.map-only #right-col { display: block; }
+            .grid.map-only #map-col   { display: none; }
         }
 
         .card {
@@ -739,18 +712,33 @@
         <button class="tab-btn" id="admin-mobile-tab-btn" data-tab="admin" style="display:none;" onclick="switchMobileTab('admin'); loadUsers();">⚙ Admin</button>
     </div>
 
+    <!-- View toggle — lives outside the grid so it stays visible in map mode -->
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+        <div class="view-mode-toggle">
+            <button type="button" id="view-list-btn" class="view-mode-btn active" onclick="setMapView('list')">☰ Full List</button>
+            <div class="vt-divider"></div>
+            <button type="button" id="view-map-btn" class="view-mode-btn" onclick="setMapView('map')">⊕ Map Only</button>
+        </div>
+    </div>
+
+    <!-- Map-only filter bar (hidden in Full List mode) -->
+    <div id="map-mode-bar">
+        <div class="mbar-row">
+            <button type="button" class="month-filter-btn active" id="map-bar-future" onclick="toggleFutureFilter()">Future Only</button>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8;cursor:pointer;font-weight:400;text-transform:none;letter-spacing:0;min-height:0;margin:0;">
+                <input type="checkbox" id="map-bar-restricted" onchange="setHideRestricted(this.checked)" style="accent-color:#C0272D;width:13px;height:13px;cursor:pointer;">
+                Hide restricted countries
+            </label>
+        </div>
+        <div class="mbar-row" id="map-bar-regions"></div>
+        <div class="mbar-row" id="map-bar-months"></div>
+    </div>
+
     <div class="grid" id="main-grid">
         <!-- Left Side: Tournaments -->
         <div id="left-col">
             <div class="card">
-                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px; border-bottom:1px solid #1e2d45; padding-bottom:14px;">
-                    <h2 style="margin:0; border:none; padding:0;">Available International Tournament</h2>
-                    <div class="view-mode-toggle">
-                        <button type="button" id="view-list-btn" class="view-mode-btn active" onclick="setMapView('list')">☰ Full List</button>
-                        <div class="vt-divider"></div>
-                        <button type="button" id="view-map-btn" class="view-mode-btn" onclick="setMapView('split')">⊞ List + Map</button>
-                    </div>
-                </div>
+                <h2>Available International Tournament</h2>
                 <div id="region-filters" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
                 <div style="margin-bottom:10px; display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
                     <button type="button" class="month-filter-btn active" id="future-only-btn" onclick="toggleFutureFilter()">Future Only</button>
@@ -1380,6 +1368,8 @@
     function toggleFutureFilter() {
         filters.futureOnly = !filters.futureOnly;
         document.getElementById('future-only-btn').classList.toggle('active', filters.futureOnly);
+        const mapBtn = document.getElementById('map-bar-future');
+        if (mapBtn) mapBtn.classList.toggle('active', filters.futureOnly);
         renderTableOnly();
         renderSummary();
     }
@@ -1446,6 +1436,7 @@
         return null;
     }
 
+    let currentMapView = 'list';
     let _map = null;
     let _markers = [];
     const MARKER_COLOR = { XL: '#C0272D', L: '#3b82f6', M: '#475569', S: '#22c55e' };
@@ -1501,30 +1492,53 @@
         }
     }
 
+    function renderMapModeBar() {
+        const hasData = new Set(tournaments.map(t => t.region).filter(Boolean));
+        document.getElementById('map-bar-regions').innerHTML = ALL_REGIONS.map(r => {
+            const empty = !hasData.has(r);
+            const active = filters.regions.has(r);
+            return `<button type="button" class="month-filter-btn${active ? ' active' : ''}"
+                onclick="toggleRegionFilter('${r}')"
+                style="${empty ? 'opacity:0.35;' : ''}"
+                title="${empty ? 'No tournaments in this region yet' : r}">${r}</button>`;
+        }).join('');
+
+        const hasMonth = new Set(tournaments.map(t => t.month).filter(Boolean));
+        document.getElementById('map-bar-months').innerHTML = MONTH_ORDER.map(m => {
+            const empty = !hasMonth.has(m);
+            const active = filters.months.has(m);
+            return `<button type="button" class="month-filter-btn${active ? ' active' : ''}"
+                onclick="toggleMonthFilter('${m}')"
+                style="${empty ? 'opacity:0.35;' : ''}">${m}</button>`;
+        }).join('');
+
+        document.getElementById('map-bar-future').classList.toggle('active', filters.futureOnly);
+        document.getElementById('map-bar-restricted').checked = filters.hideRestricted;
+    }
+
     function setMapView(view) {
-        const grid = document.getElementById('main-grid');
+        currentMapView = view;
+        const grid   = document.getElementById('main-grid');
         const mapCol = document.getElementById('map-col');
+        const mapBar = document.getElementById('map-mode-bar');
         document.getElementById('view-list-btn').classList.toggle('active', view === 'list');
-        document.getElementById('view-map-btn').classList.toggle('active', view === 'split');
-        if (view === 'split') {
-            grid.classList.add('map-split');
+        document.getElementById('view-map-btn').classList.toggle('active', view === 'map');
+
+        if (view === 'map') {
+            grid.classList.add('map-only');
             mapCol.style.display = 'block';
+            mapBar.classList.add('visible');
+            renderMapModeBar();
             requestAnimationFrame(() => {
                 initMap();
                 _map.invalidateSize();
-                _map.on('moveend', filterByMapBounds);
                 updateMapMarkers(getFilteredTournaments());
-                // fitBounds inside updateMapMarkers fires moveend which updates the list;
-                // also call directly as a fallback for cases where bounds don't change
-                filterByMapBounds();
             });
         } else {
-            grid.classList.remove('map-split');
+            grid.classList.remove('map-only');
             mapCol.style.display = 'none';
-            if (_map) {
-                _map.off('moveend', filterByMapBounds);
-                _map.remove(); _map = null; _markers = [];
-            }
+            mapBar.classList.remove('visible');
+            if (_map) { _map.remove(); _map = null; _markers = []; }
             renderTableOnly();
         }
     }
@@ -1726,6 +1740,16 @@
         renderSummary();
     }
 
+    function setHideRestricted(val) {
+        filters.hideRestricted = val;
+        const leftChk = document.getElementById('hide-restricted');
+        const mapChk  = document.getElementById('map-bar-restricted');
+        if (leftChk) leftChk.checked = val;
+        if (mapChk)  mapChk.checked  = val;
+        renderTableOnly();
+        renderSummary();
+    }
+
     function renderMonthButtons() {
         const container = document.getElementById('month-filters');
         const hasData = new Set(tournaments.map(t => t.month).filter(Boolean));
@@ -1809,23 +1833,15 @@
 
     function renderTableOnly() {
         const filtered = getFilteredTournaments();
-        _renderRows(filtered);
-        updateMapMarkers(filtered);
-        // In split mode the list is further narrowed by map viewport (moveend handles it,
-        // but also apply immediately so the list reflects the current view right away)
-        if (_map && document.getElementById('main-grid').classList.contains('map-split')) {
-            filterByMapBounds();
+        if (currentMapView !== 'map') {
+            _renderRows(filtered);
+        } else {
+            updateMapMarkers(filtered);
+            renderMapModeBar();
         }
-    }
-
-    function filterByMapBounds() {
-        if (!_map) return;
-        const bounds = _map.getBounds();
-        const inView = getFilteredTournaments().filter(t => {
-            const c = getCoords(t.location);
-            return c && bounds.contains(L.latLng(c[0], c[1]));
-        });
-        _renderRows(inView, 'No tournaments in current map view — zoom out or pan to see more.');
+        if (currentMapView !== 'map') {
+            updateMapMarkers(filtered);
+        }
     }
 
 
