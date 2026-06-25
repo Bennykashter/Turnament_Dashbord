@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ministry of the Fence - Tournament Coordination Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -60,8 +61,125 @@
             grid-template-columns: 2.2fr 1fr;
             gap: 20px;
         }
+        .grid.map-split {
+            grid-template-columns: 420px 1fr;
+        }
+        .grid.map-split #right-col { display: none; }
+        .grid.map-split #map-col   { display: block; }
+
+        /* Hide extra table columns in map split mode */
+        .grid.map-split .tournament-table th:nth-child(2),
+        .grid.map-split .tournament-table th:nth-child(3),
+        .grid.map-split .tournament-table th:nth-child(4),
+        .grid.map-split .tournament-table th:nth-child(6),
+        .grid.map-split .tournament-table th:nth-child(7),
+        .grid.map-split .tournament-table td:nth-child(2),
+        .grid.map-split .tournament-table td:nth-child(3),
+        .grid.map-split .tournament-table td:nth-child(4),
+        .grid.map-split .tournament-table td:nth-child(6),
+        .grid.map-split .tournament-table td:nth-child(7) { display: none; }
+        .grid.map-split .filter-row { display: none; }
+
+        /* Scrollable list in split mode */
+        .grid.map-split #tournament-rows-wrap {
+            max-height: 560px;
+            overflow-y: auto;
+        }
+        .grid.map-split #tournament-rows-wrap::-webkit-scrollbar { width: 5px; }
+        .grid.map-split #tournament-rows-wrap::-webkit-scrollbar-track { background: #080d14; }
+        .grid.map-split #tournament-rows-wrap::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 4px; }
+
+        /* View mode toggle */
+        .view-mode-toggle {
+            display: flex;
+            align-items: center;
+            background: #0a0f1a;
+            border: 1px solid #1e2d45;
+            border-radius: 8px;
+            overflow: hidden;
+            width: fit-content;
+            margin-bottom: 12px;
+        }
+        .view-mode-btn {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            padding: 7px 16px;
+            font-size: 11px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.18s;
+            border-radius: 0;
+            box-shadow: none;
+            min-height: 0;
+            width: auto;
+            transform: none;
+        }
+        .view-mode-btn:hover { color: #94a3b8; background: #111827; box-shadow: none; transform: none; }
+        .view-mode-btn.active { background: linear-gradient(135deg, #C0272D, #a02028); color: #fff; }
+        .view-mode-toggle .vt-divider { width: 1px; height: 26px; background: #1e2d45; flex-shrink: 0; }
+
+        /* Map column card */
+        #map-col { display: none; }
+        #map-col .card { margin-bottom: 0; padding: 16px; }
+        #leaflet-map {
+            height: 560px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #0a0f1a;
+        }
+        .map-legend {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            font-size: 11px;
+            color: #64748b;
+            align-items: center;
+        }
+        .map-legend-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        /* Leaflet dark popup */
+        .leaflet-popup-content-wrapper {
+            background: #0f1623 !important;
+            border: 1px solid #1e2d45 !important;
+            border-radius: 10px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+            color: #dde4ef !important;
+        }
+        .leaflet-popup-tip { background: #0f1623 !important; }
+        .leaflet-popup-content { margin: 12px 14px !important; font-family: 'Inter', sans-serif; min-width: 180px; }
+        .map-popup-name { font-weight: 700; font-size: 13px; color: #f1f5f9; margin-bottom: 4px; line-height: 1.3; }
+        .map-popup-loc  { font-size: 11px; color: #94a3b8; margin-bottom: 2px; }
+        .map-popup-date { font-size: 11px; color: #64748b; margin-bottom: 5px; }
+        .map-popup-disc { font-size: 11px; color: #94a3b8; margin-bottom: 5px; }
+        .map-popup-flight { font-size: 12px; color: #dde4ef; font-weight: 600; margin-bottom: 8px; }
+        .map-popup-link a {
+            display: inline-block;
+            background: linear-gradient(135deg,#C0272D,#a02028);
+            color: #fff; font-size: 11px; font-weight: 700;
+            padding: 4px 12px; border-radius: 6px; text-decoration: none;
+        }
+        .map-row-highlight td { background: rgba(192,39,45,0.12) !important; }
+
         @media (max-width: 950px) {
             .grid { grid-template-columns: 1fr; }
+            .grid.map-split { grid-template-columns: 1fr; }
+            .grid.map-split #map-col { display: none; }
+            .grid.map-split #right-col { display: block; }
+            .grid.map-split .tournament-table th,
+            .grid.map-split .tournament-table td { display: revert; }
+            .grid.map-split .filter-row { display: revert; }
+            .view-mode-toggle { display: none; }
         }
 
         .card {
@@ -597,13 +715,17 @@
         <button class="tab-btn" id="admin-mobile-tab-btn" data-tab="admin" style="display:none;" onclick="switchMobileTab('admin'); loadUsers();">⚙ Admin</button>
     </div>
 
-    <div class="grid">
+    <div class="grid" id="main-grid">
         <!-- Left Side: Tournaments -->
         <div id="left-col">
             <div class="card">
-                <h2>Available International Tournament</h2>
-                <div style="margin-bottom:4px;">
-                    <span style="color:#475569; font-size:10px; text-transform:uppercase; letter-spacing:1.2px;">Region</span>
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px; border-bottom:1px solid #1e2d45; padding-bottom:14px;">
+                    <h2 style="margin:0; border:none; padding:0;">Available International Tournament</h2>
+                    <div class="view-mode-toggle">
+                        <button type="button" id="view-list-btn" class="view-mode-btn active" onclick="setMapView('list')">☰ Full List</button>
+                        <div class="vt-divider"></div>
+                        <button type="button" id="view-map-btn" class="view-mode-btn" onclick="setMapView('split')">⊞ List + Map</button>
+                    </div>
                 </div>
                 <div id="region-filters" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
                 <div style="margin-bottom:10px; display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
@@ -615,7 +737,7 @@
                 </div>
                 <div id="month-filters" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;"></div>
                 <button type="button" class="mobile-only" onclick="toggleMobileFilters()" id="mobile-filter-btn" style="margin-bottom:10px; background:#334155; color:#e2e8f0; text-transform:none; letter-spacing:0; font-size:13px;">☰ Show Filters & Search</button>
-                <div style="overflow-x: auto;">
+                <div id="tournament-rows-wrap" style="overflow-x: auto;">
                     <table class="tournament-table">
                         <thead class="tournament-thead">
                             <tr>
@@ -656,6 +778,19 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- Map column (shown in List + Map mode) -->
+        <div id="map-col">
+            <div class="card">
+                <div id="leaflet-map"></div>
+                <div class="map-legend">
+                    <span><span class="map-legend-dot" style="background:#C0272D;"></span>XL</span>
+                    <span><span class="map-legend-dot" style="background:#3b82f6;"></span>L</span>
+                    <span><span class="map-legend-dot" style="background:#475569;"></span>M</span>
+                    <span><span class="map-legend-dot" style="background:#22c55e;"></span>S</span>
+                </div>
+            </div>
         </div>
 
         <!-- Right Side: Tabbed panel -->
@@ -1225,6 +1360,143 @@
         renderSummary();
     }
 
+    // ── Map ─────────────────────────────────────────────────────────────────
+    const GEO_TABLE = [
+        ['Bourg-la-Reine',  [48.780,   2.316]], ['Cabrera de Mar',  [41.560,   2.770]],
+        ['Le Landeron',     [47.058,   7.072]], ['New Taipei',      [25.012, 121.466]],
+        ['Grand Forks',     [49.332,-118.444]], ['Carson City',     [39.165,-119.766]],
+        ['Sioux Falls',     [43.549, -96.700]], ['Tamborine',       [-27.977,153.191]],
+        ['Bisham',          [51.557,  -0.861]], ['La Vista',        [41.183, -96.131]],
+        ['New England',     [42.360, -71.059]], ['Gainesville',     [29.651, -82.325]],
+        ['Russellville',    [36.840, -86.885]], ['Jimboomba',       [-27.835,153.027]],
+        ['Hazelridge',      [49.893, -96.795]], ['Peterborough',    [44.300, -78.320]],
+        ['Villaguardia',    [45.830,   9.080]], ['Zmigrod',         [51.477,  16.919]],
+        ['Wroclaw',         [51.108,  17.038]], ['Helsinki',        [60.170,  24.938]],
+        ['Prague',          [50.076,  14.438]], ['Bratislava',      [48.149,  17.107]],
+        ['Berlin',          [52.520,  13.405]], ['Vienna',          [48.208,  16.374]],
+        ['Paris',           [48.857,   2.352]], ['London',          [51.507,  -0.128]],
+        ['Budapest',        [47.498,  19.040]], ['Warsaw',          [52.230,  21.012]],
+        ['Stockholm',       [59.329,  18.069]], ['Copenhagen',      [55.676,  12.568]],
+        ['Gothenburg',      [57.709,  11.975]], ['Vilnius',         [54.687,  25.280]],
+        ['Edinburgh',       [55.953,  -3.188]], ['Glasgow',         [55.861,  -4.251]],
+        ['Dublin',          [53.349,  -6.260]], ['Utrecht',         [52.092,   5.104]],
+        ['Amsterdam',       [52.370,   4.895]], ['Eindhoven',       [51.441,   5.478]],
+        ['Venlo',           [51.370,   6.168]], ['Oegstgeest',      [52.175,   4.460]],
+        ['Bordeaux',        [44.837,  -0.580]], ['Lyon',            [45.748,   4.847]],
+        ['Modena',          [44.647,  10.925]], ['Turin',           [45.070,   7.687]],
+        ['Padova',          [45.406,  11.877]], ['Ravenna',         [44.418,  12.203]],
+        ['Conegliano',      [45.890,  12.297]], ['Rome',            [41.903,  12.496]],
+        ['Abingdon',        [51.671,  -1.282]], ['Lincoln',         [53.231,  -0.540]],
+        ['York',            [53.960,  -1.087]], ['Exeter',          [50.725,  -3.527]],
+        ['Cork',            [51.898,  -8.470]], ['Feakle',          [52.880,  -8.633]],
+        ['Uppsala',         [59.859,  17.639]], ['Malmo',           [55.607,  13.001]],
+        ['Kristinehamn',    [59.310,  14.108]], ['Oslo',            [59.913,  10.753]],
+        ['Hobro',           [56.642,   9.792]], ['Trnava',          [48.378,  17.588]],
+        ['Brno',            [49.195,  16.608]], ['Pardubice',       [50.043,  15.779]],
+        ['Ostrava',         [49.820,  18.262]], ['Zilina',          [49.224,  18.739]],
+        ['Bielsko-Biala',   [49.823,  19.044]], ['Kornik',          [52.240,  17.048]],
+        ['Poznan',          [52.407,  16.934]], ['Zmigrod',         [51.477,  16.919]],
+        ['Hamburg',         [53.550,  10.000]], ['Neumarkt',        [49.279,  11.461]],
+        ['Munich',          [48.135,  11.582]], ['Ulm',             [48.401,   9.998]],
+        ['Innsbruck',       [47.267,  11.392]], ['Potsdam',         [52.400,  13.060]],
+        ['Braives',         [50.540,   5.143]], ['Sofia',           [42.698,  23.322]],
+        ['Thessaloniki',    [40.629,  22.948]], ['Belgrade',        [44.787,  20.457]],
+        ['Smederevo',       [44.664,  20.929]], ['Daruvar',         [45.591,  17.225]],
+        ['Veszprem',        [47.093,  17.911]], ['Pontevedra',      [42.434,  -8.648]],
+        ['La Coruña',       [43.362,  -8.412]], ['Sodupe',          [43.200,  -3.050]],
+        ['Izmir',           [38.424,  27.143]], ['Roznov',          [49.460,  18.148]],
+        ['Midlands',        [52.486,  -1.890]], ['Adelaide',        [-34.929, 138.601]],
+        ['Melbourne',       [-37.814, 144.963]], ['Sydney',         [-33.868, 151.209]],
+        ['Perth',           [-31.952, 115.861]], ['Herzliya',       [32.166,   34.843]],
+        ['Huntsville',      [34.730,  -86.586]], ['Seattle',        [47.606, -122.332]],
+        ['Pomona',          [34.055, -117.752]], ['Barrie',         [44.389,  -79.690]],
+        ['Alexandria',      [45.317,  -74.633]], ['Airdrie',        [51.292, -114.014]],
+        ['Valdivia',        [-39.819, -73.240]], ['São Paulo',      [-23.550,  -46.633]],
+        ['León',            [21.122, -101.682]], ['Mesa',           [33.415, -111.831]],
+    ];
+
+    function getCoords(location) {
+        for (const [key, coords] of GEO_TABLE) {
+            if (location.includes(key)) return coords;
+        }
+        return null;
+    }
+
+    let _map = null;
+    let _markers = [];
+    const MARKER_COLOR = { XL: '#C0272D', L: '#3b82f6', M: '#475569', S: '#22c55e' };
+
+    function makeMapIcon(level) {
+        const c = MARKER_COLOR[level] || '#475569';
+        const s = level === 'XL' ? 16 : level === 'L' ? 13 : 10;
+        return L.divIcon({
+            className: '',
+            html: `<div style="width:${s}px;height:${s}px;background:${c};border:2px solid rgba(255,255,255,0.3);border-radius:50%;box-shadow:0 0 8px ${c}88;"></div>`,
+            iconSize: [s, s], iconAnchor: [s/2, s/2], popupAnchor: [0, -(s/2 + 5)]
+        });
+    }
+
+    function initMap() {
+        if (_map) return;
+        _map = L.map('leaflet-map', { center: [50, 15], zoom: 4 });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+            subdomains: 'abcd', maxZoom: 19
+        }).addTo(_map);
+    }
+
+    function updateMapMarkers(filtered) {
+        if (!_map) return;
+        _markers.forEach(m => m.remove());
+        _markers = [];
+        filtered.forEach(t => {
+            const coords = getCoords(t.location);
+            if (!coords) return;
+            const marker = L.marker(coords, { icon: makeMapIcon(t.level) })
+                .addTo(_map)
+                .bindPopup(`
+                    <div class="map-popup-name">${escHtml(t.name)}</div>
+                    <div class="map-popup-loc">📍 ${escHtml(t.location)}</div>
+                    <div class="map-popup-date">📅 ${escHtml(t.dates)}</div>
+                    <div class="map-popup-disc">${escHtml(t.disciplines || '')}</div>
+                    <div class="map-popup-flight">✈ ~$${t.flight}</div>
+                    ${safeUrl(t.regLink) ? `<div class="map-popup-link"><a href="${safeUrl(t.regLink)}" target="_blank" rel="noopener">Register →</a></div>` : ''}
+                `);
+            marker.on('mouseover', () => {
+                const row = document.getElementById(`t-row-${t.id}`);
+                if (row) { row.classList.add('map-row-highlight'); row.scrollIntoView({ block:'nearest', behavior:'smooth' }); }
+            });
+            marker.on('mouseout', () => {
+                document.getElementById(`t-row-${t.id}`)?.classList.remove('map-row-highlight');
+            });
+            marker._tid = t.id;
+            _markers.push(marker);
+        });
+        if (_markers.length) {
+            _map.fitBounds(L.featureGroup(_markers).getBounds().pad(0.1));
+        }
+    }
+
+    function setMapView(view) {
+        const grid = document.getElementById('main-grid');
+        const mapCol = document.getElementById('map-col');
+        document.getElementById('view-list-btn').classList.toggle('active', view === 'list');
+        document.getElementById('view-map-btn').classList.toggle('active', view === 'split');
+        if (view === 'split') {
+            grid.classList.add('map-split');
+            mapCol.style.display = 'block';
+            requestAnimationFrame(() => {
+                initMap();
+                _map.invalidateSize();
+                updateMapMarkers(getFilteredTournaments());
+            });
+        } else {
+            grid.classList.remove('map-split');
+            mapCol.style.display = 'none';
+            if (_map) { _map.remove(); _map = null; _markers = []; }
+        }
+    }
+
     async function init() {
         renderTournaments();
         renderSummary();
@@ -1493,7 +1765,7 @@
                 ? `${attendeeBlock}<span class="votes-count">${t.votes} Attending</span>`
                 : `<span style="color:#64748b; font-size:12px; font-style:italic;">Sign in to view</span>`;
             tbody.innerHTML += `
-                <tr>
+                <tr id="t-row-${t.id}">
                     <td data-label="Tournament">${nameCell}</td>
                     <td data-label="Location">${escHtml(t.location)}<br><small style="color:#94a3b8">${escHtml(t.dates)}</small></td>
                     <td data-label="Disciplines">${escHtml(t.disciplines || '-')}</td>
@@ -1504,6 +1776,7 @@
                 </tr>
             `;
         });
+        updateMapMarkers(filtered);
     }
 
 
@@ -1824,5 +2097,6 @@
 
     window.onload = init;
 </script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>

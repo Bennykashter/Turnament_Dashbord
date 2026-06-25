@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map View Demo — Ministry of the Fence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #07090f;
+            color: #dde4ef;
+            padding: 24px 20px;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #6b0d10, #C0272D 40%, #C0272D 60%, #6b0d10);
+            z-index: 1000;
+        }
+
+        .container { max-width: 1380px; margin: 0 auto; }
+
+        header {
+            text-align: center;
+            padding: 20px 0 18px;
+            border-bottom: 1px solid #1a2540;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 17px;
+            letter-spacing: 3px;
+            color: #f1f5f9;
+            text-transform: uppercase;
+        }
+        header p {
+            font-size: 11px;
+            color: #475569;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* ── Controls bar ── */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        /* ── View toggle ── */
+        .view-toggle {
+            display: flex;
+            align-items: center;
+            background: #0a0f1a;
+            border: 1px solid #1e2d45;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .view-toggle button {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.18s;
+            border-radius: 0;
+            box-shadow: none;
+            min-height: 0;
+            width: auto;
+        }
+        .view-toggle button:hover { color: #94a3b8; background: #111827; }
+        .view-toggle button.active { background: linear-gradient(135deg, #C0272D, #a02028); color: #fff; }
+        .view-toggle .divider { width: 1px; height: 28px; background: #1e2d45; flex-shrink: 0; }
+
+        /* ── Filter controls ── */
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-group input,
+        .filter-group select {
+            background: #0a0f1a;
+            border: 1px solid #1e2d45;
+            border-radius: 7px;
+            color: #dde4ef;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            padding: 7px 11px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .filter-group input { width: 180px; }
+        .filter-group input::placeholder { color: #3a4a60; }
+        .filter-group input:focus,
+        .filter-group select:focus { border-color: #C0272D; box-shadow: 0 0 0 3px rgba(192,39,45,0.1); }
+        .filter-group select { color: #94a3b8; cursor: pointer; }
+
+        .month-btn {
+            background: #0a0f1a;
+            border: 1px solid #1e2d45;
+            border-radius: 6px;
+            color: #64748b;
+            font-size: 11px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            letter-spacing: 0.5px;
+            min-height: 0;
+            width: auto;
+            box-shadow: none;
+        }
+        .month-btn:hover { color: #94a3b8; border-color: #334155; background: #111827; }
+        .month-btn.active { background: linear-gradient(135deg,#C0272D,#a02028); color: #fff; border-color: transparent; }
+
+        .reset-btn {
+            background: #1e2d45;
+            border: none;
+            border-radius: 7px;
+            color: #94a3b8;
+            font-size: 11px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            padding: 7px 12px;
+            cursor: pointer;
+            min-height: 0;
+            width: auto;
+            box-shadow: none;
+            transition: background 0.15s;
+            letter-spacing: 0.5px;
+        }
+        .reset-btn:hover { background: #2a3a55; color: #dde4ef; }
+
+        /* ── Region buttons ── */
+        .region-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .region-bar label {
+            font-size: 10px;
+            color: #3a4a60;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        #region-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+        .region-btn {
+            background: #0a0f1a;
+            border: 1px solid #1e2d45;
+            border-radius: 6px;
+            color: #64748b;
+            font-size: 11px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            padding: 5px 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+            letter-spacing: 0.4px;
+            min-height: 0;
+            width: auto;
+            box-shadow: none;
+        }
+        .region-btn:hover { color: #94a3b8; border-color: #334155; background: #111827; }
+        .region-btn.active { background: linear-gradient(135deg,#1d4ed8,#2563eb); color: #fff; border-color: transparent; }
+
+        /* ── Main layout ── */
+        .main-area {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+        .main-area.split {
+            grid-template-columns: 420px 1fr;
+        }
+
+        /* ── Card ── */
+        .card {
+            background: linear-gradient(160deg, #0f1623 0%, #111827 100%);
+            border: 1px solid #1a2540;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        }
+        .card-header {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            border-bottom: 1px solid #1e2d45;
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+        }
+        .card-header h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #f1f5f9;
+        }
+        .card-header .count {
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            color: #475569;
+            font-weight: 400;
+        }
+
+        /* ── Table ── */
+        .tbl-wrap { overflow-x: auto; }
+
+        /* In split mode, make the list panel scrollable vertically */
+        .main-area.split .tbl-wrap {
+            max-height: 560px;
+            overflow-y: auto;
+        }
+        .main-area.split .tbl-wrap::-webkit-scrollbar { width: 5px; }
+        .main-area.split .tbl-wrap::-webkit-scrollbar-track { background: #080d14; }
+        .main-area.split .tbl-wrap::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 4px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #080d14;
+            color: #3a4a60;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            padding: 9px 11px;
+            text-align: left;
+            border: 1px solid #1a2540;
+        }
+        td {
+            padding: 10px 11px;
+            border: 1px solid #1a2540;
+            color: #dde4ef;
+            vertical-align: top;
+        }
+        tr:nth-child(even) td { background: #0d1420; }
+        tbody tr:hover td { background: rgba(192,39,45,0.06); cursor: default; }
+        tr.map-hover td { background: rgba(192,39,45,0.14) !important; }
+
+        /* Hide extra columns in split mode */
+        .main-area.split .col-extra { display: none; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-XL { background: linear-gradient(135deg,#7c1d1d,#C0272D); color:#fff; }
+        .badge-L  { background: linear-gradient(135deg,#1d4ed8,#3b82f6); color:#fff; }
+        .badge-M  { background: #1a2540; color:#64748b; border:1px solid #2a3a55; }
+        .badge-S  { background: #0f2318; color:#4ade80; border:1px solid #166534; }
+
+        .t-name { font-weight: 600; font-size: 13px; }
+        .t-size  { margin-top: 3px; }
+        .loc  { color: #94a3b8; font-size: 12px; }
+        .date { color: #64748b; font-size: 11px; margin-top: 2px; }
+        .disc { color: #94a3b8; font-size: 11px; }
+        .flight-cell { color: #94a3b8; white-space: nowrap; }
+
+        /* no-results */
+        .no-results {
+            text-align: center;
+            color: #3a4a60;
+            padding: 32px 0;
+            font-size: 13px;
+        }
+
+        /* ── Map panel ── */
+        #map-card { display: none; }
+        #map-card.visible { display: block; }
+
+        #leaflet-map {
+            height: 580px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #0a0f1a;
+        }
+
+        /* Leaflet dark popup */
+        .leaflet-popup-content-wrapper {
+            background: #0f1623 !important;
+            border: 1px solid #1e2d45 !important;
+            border-radius: 10px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+            color: #dde4ef !important;
+        }
+        .leaflet-popup-tip { background: #0f1623 !important; }
+        .leaflet-popup-content { margin: 12px 14px !important; font-family: 'Inter', sans-serif; min-width: 180px; }
+        .popup-name { font-weight: 700; font-size: 13px; color: #f1f5f9; margin-bottom: 5px; line-height: 1.3; }
+        .popup-loc  { font-size: 11px; color: #94a3b8; margin-bottom: 2px; }
+        .popup-date { font-size: 11px; color: #64748b; margin-bottom: 5px; }
+        .popup-disc { font-size: 11px; color: #94a3b8; margin-bottom: 8px; }
+        .popup-flight { font-size: 12px; color: #dde4ef; font-weight: 600; margin-bottom: 8px; }
+        .popup-link a {
+            display: inline-block;
+            background: linear-gradient(135deg,#C0272D,#a02028);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        /* ── Legend ── */
+        .legend {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            font-size: 11px;
+            color: #64748b;
+            align-items: center;
+        }
+        .legend-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <header>
+        <h1>Tournament Coordination Dashboard</h1>
+        <p>Map View Demo</p>
+    </header>
+
+    <!-- Controls: view toggle + filters -->
+    <div class="controls">
+        <div class="view-toggle">
+            <button id="btn-list" class="active" onclick="setView('list')">☰ Full List</button>
+            <div class="divider"></div>
+            <button id="btn-split" onclick="setView('split')">⊞ List + Map</button>
+        </div>
+
+        <div class="filter-group">
+            <input type="text" id="f-name" placeholder="Search tournament…" oninput="applyFilters()">
+            <select id="f-size" onchange="applyFilters()">
+                <option value="">All sizes</option>
+                <option value="XL">XL (100+)</option>
+                <option value="L">L (50–100)</option>
+                <option value="M">M (30–50)</option>
+                <option value="S">S (&lt;25)</option>
+            </select>
+        </div>
+
+        <button id="btn-future" class="month-btn active" onclick="toggleFuture()">Future Only</button>
+
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8;cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" id="chk-restricted" onchange="applyFilters()" style="accent-color:#C0272D;width:13px;height:13px;cursor:pointer;">
+            Hide restricted
+        </label>
+
+        <div class="filter-group" id="month-btns"></div>
+
+        <button class="reset-btn" onclick="resetFilters()">✕ Reset</button>
+    </div>
+
+    <!-- Region filter — only visible in Full List mode -->
+    <div class="region-bar" id="region-bar">
+        <label>Region</label>
+        <div id="region-btns"></div>
+    </div>
+
+    <!-- Main area -->
+    <div class="main-area" id="main-area">
+
+        <!-- Tournament list -->
+        <div class="card" id="list-card">
+            <div class="card-header">
+                <h2>Tournaments</h2>
+                <span class="count" id="count-label"></span>
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tournament</th>
+                            <th class="col-extra">Location & Date</th>
+                            <th class="col-extra">Disciplines</th>
+                            <th class="col-extra">TS</th>
+                            <th>Flight ~$</th>
+                        </tr>
+                    </thead>
+                    <tbody id="t-rows"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Map panel -->
+        <div class="card" id="map-card">
+            <div class="card-header">
+                <h2>Map</h2>
+                <span class="count" id="map-count-label"></span>
+            </div>
+            <div id="leaflet-map"></div>
+            <div class="legend">
+                <span><span class="legend-dot" style="background:#C0272D;"></span>XL</span>
+                <span><span class="legend-dot" style="background:#3b82f6;"></span>L</span>
+                <span><span class="legend-dot" style="background:#475569;"></span>M</span>
+                <span><span class="legend-dot" style="background:#22c55e;"></span>S</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── Data ───────────────────────────────────────────────────────────────────
+const ALL = [
+    // Europe
+    { id:1,  month:"January",   region:"Europe",        name:"Swordmasters Cup 4 2026",          location:"Wroclaw, Poland",           dates:"Jan 24 2026",        disciplines:"Longsword",                              level:"M",  flight:430,  lat:51.108, lng:17.038 },
+    { id:2,  month:"January",   region:"Europe",        name:"Helsinki Longsword Open 2026",      location:"Helsinki, Finland",         dates:"Jan 23 2026",        disciplines:"Longsword, Rapier & Dagger, Sabre",      level:"L",  flight:680,  lat:60.170, lng:24.938 },
+    { id:3,  month:"February",  region:"Europe",        name:"Herne's Cup 2026",                  location:"Abingdon, UK",              dates:"Feb 14–15 2026",     disciplines:"Longsword, Rapier & Dagger, Sabre",      level:"L",  flight:620,  lat:51.671, lng:-1.282 },
+    { id:4,  month:"February",  region:"Europe",        name:"Glasgow HEMA Open 2026",            location:"Glasgow, UK",               dates:"Feb 28 – Mar 1 2026",disciplines:"Longsword, Sabre, Broadsword, Messer",   level:"L",  flight:600,  lat:55.861, lng:-4.251 },
+    { id:5,  month:"February",  region:"Europe",        name:"Budapest Blade Brawl 2026",         location:"Budapest, Hungary",         dates:"Feb 7 2026",         disciplines:"Longsword, Sabre",                       level:"M",  flight:450,  lat:47.498, lng:19.040 },
+    { id:6,  month:"March",     region:"Europe",        name:"Berlin HEMA Cup 2026",              location:"Berlin, Germany",           dates:"Mar 7–8 2026",       disciplines:"Longsword, Rapier & Dagger, Sabre",      level:"L",  flight:540,  lat:52.520, lng:13.405 },
+    { id:7,  month:"March",     region:"Europe",        name:"Vilnius HEMA Open 2026",            location:"Vilnius, Lithuania",        dates:"Mar 28 2026",        disciplines:"Arming Sword, Sabre, Rapier, Singlestick",level:"L", flight:490,  lat:54.687, lng:25.280 },
+    { id:8,  month:"April",     region:"Europe",        name:"Hafnia Open 2026",                  location:"Copenhagen, Denmark",       dates:"Apr 11 2026",        disciplines:"Longsword, Messer, Sabre",               level:"L",  flight:650,  lat:55.676, lng:12.568 },
+    { id:9,  month:"April",     region:"Europe",        name:"Holmgang 2026",                     location:"Stockholm, Sweden",         dates:"Apr 18 2026",        disciplines:"Longsword, Sabre, Rapier",               level:"L",  flight:660,  lat:59.329, lng:18.069 },
+    { id:10, month:"April",     region:"Europe",        name:"Paris HEMA Open 2026",              location:"Paris, France",             dates:"Apr 21 2026",        disciplines:"Longsword, Sabre",                       level:"L",  flight:610,  lat:48.857, lng:2.352  },
+    { id:11, month:"April",     region:"Europe",        name:"Warsaw Sabremasters Cup 2026",      location:"Warsaw, Poland",            dates:"Apr 11 2026",        disciplines:"Sabre",                                  level:"M",  flight:440,  lat:52.230, lng:21.012 },
+    { id:12, month:"May",       region:"Europe",        name:"London HEMA Open 2026",             location:"London, UK",                dates:"May 2–4 2026",       disciplines:"Longsword, Rapier & Dagger, Sabre",      level:"XL", flight:640,  lat:51.507, lng:-0.128 },
+    { id:13, month:"May",       region:"Europe",        name:"Symphony of Steel 2026",            location:"Ulm, Germany",              dates:"May 9 2026",         disciplines:"Longsword",                              level:"L",  flight:530,  lat:48.401, lng:9.998  },
+    { id:14, month:"June",      region:"Europe",        name:"Black Horns Cup 2026",              location:"Kornik, Poland",            dates:"Jun 12–14 2026",     disciplines:"Longsword, Sabre, Rapier & Dagger",      level:"XL", flight:450,  lat:52.240, lng:17.048 },
+    { id:15, month:"June",      region:"Europe",        name:"Albion Cup 2026",                   location:"Bisham Abbey, UK",          dates:"Jun 26–28 2026",     disciplines:"Multiple weapons",                       level:"XL", flight:630,  lat:51.557, lng:-0.861 },
+    { id:16, month:"July",      region:"Europe",        name:"Rapier Vienna 2026",                location:"Vienna, Austria",           dates:"Jul 10–12 2026",     disciplines:"Rapier, Sidesword",                      level:"M",  flight:470,  lat:48.208, lng:16.374 },
+    { id:17, month:"September", region:"Europe",        name:"Swiss Blades 2026",                 location:"Le Landeron, Switzerland",  dates:"Sep 11–13 2026",     disciplines:"Longsword, Rapier, Sword & Buckler",     level:"XL", flight:600,  lat:47.058, lng:7.072  },
+    { id:18, month:"September", region:"Europe",        name:"BOHEMA Domination 2026",            location:"Prague, Czech Republic",    dates:"Sep 26–27 2026",     disciplines:"Longsword",                              level:"XL", flight:430,  lat:50.076, lng:14.438 },
+    { id:19, month:"October",   region:"Europe",        name:"Tyrnhaw 2026",                      location:"Trnava, Slovakia",          dates:"Oct 17–18 2026",     disciplines:"Longsword, Sabre",                       level:"XL", flight:430,  lat:48.378, lng:17.588 },
+    { id:20, month:"October",   region:"Europe",        name:"Swordfish XV 2026",                 location:"Gothenburg, Sweden",        dates:"Oct–Nov 2026",       disciplines:"Longsword, Sabre, Rapier & Dagger",      level:"XL", flight:670,  lat:57.709, lng:11.975 },
+    { id:21, month:"October",   region:"Europe",        name:"Feile na nGaiscioch 2026",          location:"Dublin, Ireland",           dates:"Oct 24–26 2026",     disciplines:"Longsword, Sword & Buckler",             level:"L",  flight:710,  lat:53.349, lng:-6.260 },
+    { id:22, month:"November",  region:"Europe",        name:"Dutch Lions Cup 2026",              location:"Utrecht, Netherlands",      dates:"Nov 2026 (TBC)",     disciplines:"Longsword",                              level:"XL", flight:570,  lat:52.092, lng:5.104  },
+    // USA
+    { id:23, month:"June",      region:"USA",           name:"Green Chapel 2026",                 location:"La Vista, NE, USA",         dates:"Jun 27–28 2026",     disciplines:"Sabre, Longsword, Smallsword, Rapier",   level:"M",  flight:900,  lat:41.183, lng:-96.131 },
+    { id:24, month:"July",      region:"USA",           name:"Cactus Cup 2026",                   location:"Mesa, AZ, USA",             dates:"Jul 17–19 2026",     disciplines:"Longsword, Messer, Sabre, Cutting",      level:"L",  flight:1100, lat:33.415, lng:-111.831 },
+    { id:25, month:"September", region:"USA",           name:"Swordsquatch 2026",                 location:"Seattle, WA, USA",          dates:"Sep 11–13 2026",     disciplines:"Longsword, Women's Longsword",            level:"L",  flight:1100, lat:47.606, lng:-122.332 },
+    { id:26, month:"October",   region:"USA",           name:"Iron Gate Exhibition Fall 2026",    location:"New England, MA, USA",      dates:"TBC (Fall 2026)",    disciplines:"Longsword, Rapier, multiple disciplines", level:"XL", flight:1000, lat:42.360, lng:-71.059 },
+    // North America
+    { id:27, month:"July",      region:"North America", name:"HEMA Tournament of Valour 2026",    location:"Hazelridge, MB, Canada",    dates:"Jul 25–26 2026",     disciplines:"Longsword, Single Rapier",               level:"M",  flight:1200, lat:49.892, lng:-96.783 },
+    { id:28, month:"September", region:"North America", name:"King's Cup HEMA Tournament 2026",   location:"Peterborough, ON, Canada",  dates:"Sep 19–20 2026",     disciplines:"Longsword, Single Sword",                level:"L",  flight:1100, lat:44.300, lng:-78.320 },
+    // Oceania
+    { id:29, month:"July",      region:"Oceania",       name:"Sword Fight VIII 2026",             location:"Tamborine Mountain, QLD, Australia", dates:"Jul 11–12 2026", disciplines:"Longsword, Sidesword, Sabre",        level:"L",  flight:1900, lat:-27.977, lng:153.191 },
+    { id:30, month:"October",   region:"Oceania",       name:"Oktoberfecht 2026",                 location:"Melbourne, VIC, Australia", dates:"Oct 3–4 2026",       disciplines:"Longsword, Sidesword",                   level:"L",  flight:1900, lat:-37.814, lng:144.963 },
+    // Asia
+    { id:31, month:"June",      region:"Asia",          name:"Clash of Steel 2026",               location:"New Taipei City, Taiwan",   dates:"Jun 27–28 2026",     disciplines:"Longsword, Rapier & Dagger",             level:"L",  flight:950,  lat:25.012, lng:121.466 },
+    // Middle East
+    { id:32, month:"December",  region:"Middle East",   name:"Maoz Zornhau 2026",                 location:"Herzliya, Israel",          dates:"~Dec 2026 (TBC)",    disciplines:"Longsword",                              level:"S",  flight:0,    lat:32.166, lng:34.843 },
+];
+
+const MONTHS  = [...new Set(ALL.map(t => t.month))];
+const REGIONS = [...new Set(ALL.map(t => t.region))];
+
+// ── Country restrictions (Israeli passport) ────────────────────────────────
+const RESTRICTIONS = {
+    'Iran':       { type:'ban',      text:'Israeli passports not accepted — entry is forbidden by law.' },
+    'Iraq':       { type:'ban',      text:'Israeli passports not accepted — entry is forbidden.' },
+    'Syria':      { type:'ban',      text:'Israeli passports not accepted — entry is forbidden.' },
+    'Lebanon':    { type:'ban',      text:'Israeli passports not accepted — entry is forbidden.' },
+    'Libya':      { type:'ban',      text:'Israeli passports not accepted — entry is forbidden.' },
+    'Yemen':      { type:'ban',      text:'Israeli passports not accepted — entry is forbidden.' },
+    'Pakistan':   { type:'ban',      text:'Israeli passports not accepted — entry is forbidden.' },
+    'Bangladesh': { type:'ban',      text:'Israeli passports not accepted — entry is forbidden.' },
+    'Malaysia':   { type:'ban',      text:'Israeli passports not accepted — entry is forbidden.' },
+    'Indonesia':  { type:'ban',      text:'Israeli passports not accepted — entry is forbidden.' },
+    'Kuwait':     { type:'ban',      text:'Israeli passports not accepted — entry is restricted.' },
+    'Russia':     { type:'advisory', text:'Israeli MFA advises against travel to Russia.' },
+    'Belarus':    { type:'advisory', text:'Israeli MFA advises against travel to Belarus.' },
+};
+
+function getRestriction(t) {
+    const loc = (t.location || '') + ' ' + (t.region || '');
+    for (const [country, rule] of Object.entries(RESTRICTIONS)) {
+        if (loc.includes(country)) return rule;
+    }
+    return null;
+}
+
+// ── Date parser ────────────────────────────────────────────────────────────
+const TODAY = new Date();
+TODAY.setHours(0, 0, 0, 0);
+
+function parseStartDate(dateStr) {
+    if (!dateStr) return null;
+    const s = dateStr.replace(/[~]/g, '').replace(/\(.*?\)/g, '').trim();
+    if (/TBC/i.test(s) && !/\d{4}/.test(s)) return null; // pure TBC = future
+    // "Mon DD–DD YYYY" or "Mon DD YYYY"
+    let m = s.match(/([A-Za-z]+)\s+(\d{1,2})(?:[–\-]\d{1,2})?\s+(\d{4})/);
+    if (m) return new Date(`${m[1]} ${m[2]}, ${m[3]}`);
+    // "Mon DD – Mon DD YYYY"
+    m = s.match(/([A-Za-z]+)\s+(\d{1,2})\s*[–\-]\s*[A-Za-z]+\s+\d{1,2}\s+(\d{4})/);
+    if (m) return new Date(`${m[1]} ${m[2]}, ${m[3]}`);
+    // "~Mon YYYY" or "Mon YYYY" (month-only)
+    m = s.match(/([A-Za-z]+)\s+(\d{4})/);
+    if (m) return new Date(`${m[1]} 1, ${m[2]}`);
+    return null;
+}
+
+function isFuture(t) {
+    const d = parseStartDate(t.dates);
+    if (!d) return true; // TBC / unparseable → keep
+    return d >= TODAY;
+}
+
+// ── Filter state ───────────────────────────────────────────────────────────
+let activeMonths  = new Set();
+let activeRegions = new Set();
+let futureOnly    = true;
+
+function getFiltered() {
+    const name       = document.getElementById('f-name').value.trim().toLowerCase();
+    const size       = document.getElementById('f-size').value;
+    const hideRestr  = document.getElementById('chk-restricted').checked;
+    return ALL.filter(t => {
+        if (name && !t.name.toLowerCase().includes(name)) return false;
+        if (size && t.level !== size) return false;
+        if (activeMonths.size  && !activeMonths.has(t.month))   return false;
+        if (activeRegions.size && !activeRegions.has(t.region)) return false;
+        if (futureOnly && !isFuture(t)) return false;
+        if (hideRestr  && getRestriction(t)) return false;
+        return true;
+    });
+}
+
+function applyFilters() {
+    const filtered = getFiltered();
+    renderTable(filtered);
+    if (map) updateMarkers(filtered);
+}
+
+function toggleFuture() {
+    futureOnly = !futureOnly;
+    document.getElementById('btn-future').classList.toggle('active', futureOnly);
+    applyFilters();
+}
+
+function resetFilters() {
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-size').value = '';
+    document.getElementById('chk-restricted').checked = false;
+    futureOnly = true;
+    document.getElementById('btn-future').classList.add('active');
+    activeMonths.clear();
+    activeRegions.clear();
+    document.querySelectorAll('.month-btn, .region-btn').forEach(b => b.classList.remove('active'));
+    applyFilters();
+}
+
+function toggleMonth(month, btn) {
+    activeMonths.has(month) ? activeMonths.delete(month) : activeMonths.add(month);
+    btn.classList.toggle('active');
+    applyFilters();
+}
+
+function toggleRegion(region, btn) {
+    activeRegions.has(region) ? activeRegions.delete(region) : activeRegions.add(region);
+    btn.classList.toggle('active');
+    applyFilters();
+}
+
+// ── Month & region buttons ─────────────────────────────────────────────────
+function buildMonthButtons() {
+    const container = document.getElementById('month-btns');
+    MONTHS.forEach(m => {
+        const btn = document.createElement('button');
+        btn.className = 'month-btn';
+        btn.textContent = m.slice(0, 3);
+        btn.title = m;
+        btn.onclick = () => toggleMonth(m, btn);
+        container.appendChild(btn);
+    });
+}
+
+function buildRegionButtons() {
+    const container = document.getElementById('region-btns');
+    REGIONS.forEach(r => {
+        const btn = document.createElement('button');
+        btn.className = 'region-btn';
+        btn.textContent = r;
+        btn.onclick = () => toggleRegion(r, btn);
+        container.appendChild(btn);
+    });
+}
+
+// ── Render table ───────────────────────────────────────────────────────────
+function renderTable(filtered) {
+    const tbody = document.getElementById('t-rows');
+    document.getElementById('count-label').textContent = `${filtered.length} shown`;
+
+    if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="no-results">No tournaments match the current filters.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(t => {
+        const restr = getRestriction(t);
+        const restrictBadge = restr
+            ? `<span title="${restr.text}" style="margin-left:5px;display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:10px;font-style:normal;cursor:help;${restr.type==='ban'?'background:#3b0a0a;color:#ef4444;border:1px solid #7f1d1d;':'background:#2d1d00;color:#f59e0b;border:1px solid #78350f;'}">!</span>`
+            : '';
+        return `
+        <tr id="row-${t.id}"
+            onmouseenter="highlightMarker(${t.id})"
+            onmouseleave="unhighlightMarker(${t.id})">
+            <td>
+                <div class="t-name">${t.name}${restrictBadge}</div>
+                <div class="t-size"><span class="badge badge-${t.level}">${t.level}</span></div>
+            </td>
+            <td class="col-extra">
+                <div class="loc">${t.location}</div>
+                <div class="date">${t.dates}</div>
+            </td>
+            <td class="col-extra disc">${t.disciplines}</td>
+            <td class="col-extra"><span class="badge badge-${t.level}">${t.level}</span></td>
+            <td class="flight-cell">$${t.flight}</td>
+        </tr>`; }).join('');
+}
+
+// ── Map ────────────────────────────────────────────────────────────────────
+let map = null;
+let markers = [];
+
+const MARKER_COLOR = { XL: '#C0272D', L: '#3b82f6', M: '#475569', S: '#22c55e' };
+
+function makeIcon(level) {
+    const c = MARKER_COLOR[level] || '#475569';
+    const s = level === 'XL' ? 16 : level === 'L' ? 13 : 10;
+    return L.divIcon({
+        className: '',
+        html: `<div style="width:${s}px;height:${s}px;background:${c};border:2px solid rgba(255,255,255,0.3);border-radius:50%;box-shadow:0 0 8px ${c}88;"></div>`,
+        iconSize: [s, s],
+        iconAnchor: [s/2, s/2],
+        popupAnchor: [0, -(s/2 + 5)]
+    });
+}
+
+function initMap() {
+    if (map) return;
+    map = L.map('leaflet-map', { center: [52, 13], zoom: 4 });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(map);
+    updateMarkers(getFiltered());
+}
+
+function updateMarkers(filtered) {
+    markers.forEach(m => m.remove());
+    markers = [];
+    document.getElementById('map-count-label').textContent = `${filtered.length} shown`;
+
+    filtered.forEach(t => {
+        const marker = L.marker([t.lat, t.lng], { icon: makeIcon(t.level) })
+            .addTo(map)
+            .bindPopup(`
+                <div class="popup-name">${t.name}</div>
+                <div class="popup-loc">📍 ${t.location}</div>
+                <div class="popup-date">📅 ${t.dates}</div>
+                <div class="popup-disc">${t.disciplines}</div>
+                <div class="popup-flight">✈ ~$${t.flight}</div>
+                <div class="popup-link"><a href="#" target="_blank">Register →</a></div>
+            `);
+
+        marker.on('mouseover', () => {
+            const row = document.getElementById(`row-${t.id}`);
+            if (row) { row.classList.add('map-hover'); row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+        });
+        marker.on('mouseout', () => {
+            document.getElementById(`row-${t.id}`)?.classList.remove('map-hover');
+        });
+
+        marker._tid = t.id;
+        markers.push(marker);
+    });
+
+    if (markers.length) {
+        map.fitBounds(L.featureGroup(markers).getBounds().pad(0.12));
+    }
+}
+
+function highlightMarker(id) {
+    markers.find(m => m._tid === id)?.openPopup();
+}
+function unhighlightMarker(id) {
+    markers.find(m => m._tid === id)?.closePopup();
+}
+
+// ── View toggle ────────────────────────────────────────────────────────────
+let currentView = 'list';
+
+function setView(view) {
+    currentView = view;
+    const mainArea = document.getElementById('main-area');
+    const mapCard  = document.getElementById('map-card');
+
+    document.getElementById('btn-list').classList.toggle('active', view === 'list');
+    document.getElementById('btn-split').classList.toggle('active', view === 'split');
+
+    const regionBar = document.getElementById('region-bar');
+
+    if (view === 'list') {
+        mainArea.classList.remove('split');
+        mapCard.classList.remove('visible');
+        regionBar.style.display = '';
+        if (map) { map.remove(); map = null; markers = []; }
+    } else {
+        mainArea.classList.add('split');
+        mapCard.classList.add('visible');
+        regionBar.style.display = 'none';
+        requestAnimationFrame(() => { initMap(); map.invalidateSize(); });
+    }
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+buildMonthButtons();
+buildRegionButtons();
+applyFilters();
+</script>
+</body>
+</html>
