@@ -1525,7 +1525,10 @@
             const isGenericReg = !t.regLink || t.regLink === 'https://hemaratings.com/events/';
             const regBtn = !isGenericReg && safeUrl(t.regLink)
                 ? `<div class="map-popup-link"><a href="${safeUrl(t.regLink)}" target="_blank" rel="noopener">Register →</a></div>`
-                : `<div style="color:#f59e0b;font-weight:700;font-size:12px;" title="No specific registration page — date and location may be unverified">? Unverified</div>`;
+                : `<div style="display:flex;align-items:center;gap:6px;">
+                     ${safeUrl(t.prevLink) ? `<a href="${safeUrl(t.prevLink)}" target="_blank" rel="noopener" style="background:linear-gradient(135deg,#1e2d45,#2a3a55);color:#94a3b8;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;text-decoration:none;border:1px solid #334155;">Info →</a>` : ''}
+                     <span title="No specific registration page — date and location may be unverified" style="color:#f59e0b;font-weight:700;font-size:13px;cursor:help;">?</span>
+                   </div>`;
             const attendBtn = currentUser
                 ? `<button class="map-popup-attend" onclick="openAttendanceModal(${t.id})">Attend</button>`
                 : '';
@@ -1859,9 +1862,12 @@
             const unverifiedBadge = isGenericLink
                 ? `<span title="No specific registration page found — date and location may be unverified" style="color:#f59e0b;font-weight:700;font-size:13px;cursor:help;margin-left:4px;">?</span>`
                 : '';
+            const prevLinkBtn = isGenericLink && safeUrl(t.prevLink)
+                ? `<a href="${safeUrl(t.prevLink)}" target="_blank" rel="noopener noreferrer" style="color:#64748b;font-size:11px;font-weight:600;text-decoration:none;margin-right:4px;">Info →</a>`
+                : '';
             const regCell = !isGenericLink && safeUrl(t.regLink)
                 ? `<a href="${safeUrl(t.regLink)}" target="_blank" rel="noopener noreferrer" style="color:#C0272D; font-weight:600; text-decoration:none;">Register →</a>${unverifiedBadge}`
-                : unverifiedBadge || '-';
+                : `${prevLinkBtn}${unverifiedBadge}` || '-';
             const myResponse = currentUser
                 ? responses.find(r => r.user_id === currentUser.id && r.tournament === t.name)
                 : null;
