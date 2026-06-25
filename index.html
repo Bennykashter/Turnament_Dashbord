@@ -162,12 +162,35 @@
         .map-popup-date { font-size: 11px; color: #64748b; margin-bottom: 5px; }
         .map-popup-disc { font-size: 11px; color: #94a3b8; margin-bottom: 5px; }
         .map-popup-flight { font-size: 12px; color: #dde4ef; font-weight: 600; margin-bottom: 8px; }
+        .map-popup-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
         .map-popup-link a {
+            display: inline-block;
+            background: linear-gradient(135deg,#1e2d45,#2a3a55);
+            color: #94a3b8; font-size: 11px; font-weight: 700;
+            padding: 5px 12px; border-radius: 6px; text-decoration: none;
+            border: 1px solid #334155;
+            transition: background 0.15s;
+        }
+        .map-popup-link a:hover { background: linear-gradient(135deg,#2a3a55,#334155); color: #dde4ef; }
+        .map-popup-attend {
             display: inline-block;
             background: linear-gradient(135deg,#C0272D,#a02028);
             color: #fff; font-size: 11px; font-weight: 700;
-            padding: 4px 12px; border-radius: 6px; text-decoration: none;
+            padding: 5px 14px; border-radius: 6px;
+            border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+            letter-spacing: 0.5px; text-transform: uppercase;
+            box-shadow: 0 2px 8px rgba(192,39,45,0.35);
+            transition: all 0.15s;
+            width: auto; min-height: 0; transform: none;
         }
+        .map-popup-attend:hover { background: linear-gradient(135deg,#d42c33,#C0272D); box-shadow: 0 3px 12px rgba(192,39,45,0.5); transform: none; }
+        .map-popup-mystatus { font-size: 11px; font-weight: 600; margin-bottom: 6px; }
         .map-row-highlight td { background: rgba(192,39,45,0.12) !important; }
 
         @media (max-width: 950px) {
@@ -1467,6 +1490,19 @@
         filtered.forEach(t => {
             const coords = getCoords(t.location);
             if (!coords) return;
+            const myResp = currentUser
+                ? responses.find(r => r.user_id === currentUser.id && r.tournament === t.name)
+                : null;
+            const statusColor = { Yes: '#4ade80', Maybe: '#f59e0b', No: '#64748b' };
+            const myStatusHtml = myResp
+                ? `<div class="map-popup-mystatus" style="color:${statusColor[myResp.attend] || '#94a3b8'};">You: ${myResp.attend}</div>`
+                : '';
+            const regBtn = safeUrl(t.regLink)
+                ? `<div class="map-popup-link"><a href="${safeUrl(t.regLink)}" target="_blank" rel="noopener">Register →</a></div>`
+                : '';
+            const attendBtn = currentUser
+                ? `<button class="map-popup-attend" onclick="openAttendanceModal(${t.id})">Attend</button>`
+                : '';
             const marker = L.marker(coords, { icon: makeMapIcon(t.level) })
                 .addTo(_map)
                 .bindPopup(`
@@ -1475,7 +1511,8 @@
                     <div class="map-popup-date">📅 ${escHtml(t.dates)}</div>
                     <div class="map-popup-disc">${escHtml(t.disciplines || '')}</div>
                     <div class="map-popup-flight">✈ ~$${t.flight}</div>
-                    ${safeUrl(t.regLink) ? `<div class="map-popup-link"><a href="${safeUrl(t.regLink)}" target="_blank" rel="noopener">Register →</a></div>` : ''}
+                    ${myStatusHtml}
+                    <div class="map-popup-actions">${regBtn}${attendBtn}</div>
                 `);
             marker.on('mouseover', () => {
                 const row = document.getElementById(`t-row-${t.id}`);
